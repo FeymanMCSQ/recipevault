@@ -3,6 +3,7 @@
  * Quest 3.1: Selection Detector
  * Quest 3.2: Hover Save Button
  * Quest 3.3: Capture Modal
+ * Quest 3.4: API Submission
  */
 
 // Immediate log to confirm script is running
@@ -10,6 +11,7 @@ console.log("%c[RecipeVault] Content script LOADED", "color: green; font-weight:
 
 const MAX_CAPTURE_CHARS = 50000;
 const BUTTON_OFFSET = 8;
+const LOGIN_URL = "http://localhost:3000"; // Used for login prompt only
 
 interface SelectionData {
     text: string;
@@ -40,6 +42,7 @@ let shadowHost: HTMLElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
 let saveButton: HTMLButtonElement | null = null;
 let modal: HTMLElement | null = null;
+let toastContainer: HTMLElement | null = null;
 let currentSelectionData: SelectionData | null = null;
 let isModalOpen = false;
 
@@ -286,6 +289,73 @@ function initShadowDOM(): void {
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        .btn-save.loading {
+            pointer-events: none;
+        }
+
+        /* Toast Container */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .toast {
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: toastSlideIn 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 320px;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .toast-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .toast svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        .toast a {
+            color: white;
+            text-decoration: underline;
+            font-weight: 600;
+        }
     `;
     shadowRoot.appendChild(styles);
 
@@ -345,6 +415,11 @@ function initShadowDOM(): void {
     });
     shadowRoot.appendChild(modal);
 
+    // Create toast container
+    toastContainer = document.createElement("div");
+    toastContainer.className = "toast-container";
+    shadowRoot.appendChild(toastContainer);
+
     // Wire up modal events
     const titleInput = modal.querySelector(".title-input") as HTMLInputElement;
     const saveBtn = modal.querySelector(".btn-save") as HTMLButtonElement;
@@ -359,7 +434,56 @@ function initShadowDOM(): void {
     saveBtn?.addEventListener("click", handleModalSave);
     cancelBtn?.addEventListener("click", closeModal);
 
-    console.log("[RecipeVault] Shadow DOM + Modal initialized");
+    console.log("[RecipeVault] Shadow DOM + Modal + Toasts initialized");
+}
+
+// ============================================
+// Toast Functions
+// ============================================
+
+function showToast(message: string, type: "success" | "error" | "warning", duration = 4000): void {
+    if (!toastContainer) return;
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+
+    const icon = type === "success"
+        ? `<svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>`
+        : type === "error"
+            ? `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`
+            : `<svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>`;
+
+    toast.innerHTML = icon + `<span>${message}</span>`;
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(20px)";
+        toast.style.transition = "all 0.25s ease";
+        setTimeout(() => toast.remove(), 250);
+    }, duration);
+}
+
+// ============================================
+// API Functions
+// ============================================
+
+async function saveRecipeToAPI(payload: CapturePayload): Promise<{ success: boolean; error?: string }> {
+    return new Promise((resolve) => {
+        // Route through background worker to avoid CORS
+        chrome.runtime.sendMessage(
+            { action: "SAVE_RECIPE", payload },
+            (response: { success: boolean; error?: string }) => {
+                if (chrome.runtime.lastError) {
+                    console.error("[RecipeVault] Message error:", chrome.runtime.lastError);
+                    resolve({ success: false, error: "EXTENSION_ERROR" });
+                    return;
+                }
+                console.log("[RecipeVault] Background response:", response);
+                resolve(response);
+            }
+        );
+    });
 }
 
 // ============================================
@@ -371,7 +495,6 @@ function openModal(): void {
 
     isModalOpen = true;
 
-    // Prefill title with page title
     const titleInput = modal.querySelector(".title-input") as HTMLInputElement;
     const tagsInput = modal.querySelector(".tags-input") as HTMLInputElement;
     const notesInput = modal.querySelector(".notes-input") as HTMLTextAreaElement;
@@ -392,7 +515,6 @@ function openModal(): void {
     modal.classList.add("visible");
     hideButton();
 
-    // Focus title input
     setTimeout(() => titleInput?.focus(), 50);
 
     console.log("[RecipeVault] Modal opened");
@@ -405,15 +527,24 @@ function closeModal(): void {
     modal.classList.remove("visible");
     currentSelectionData = null;
 
+    // Reset button state
+    const saveBtn = modal.querySelector(".btn-save") as HTMLButtonElement;
+    if (saveBtn) {
+        saveBtn.classList.remove("loading");
+        saveBtn.textContent = "Save";
+        saveBtn.disabled = true;
+    }
+
     console.log("[RecipeVault] Modal closed");
 }
 
-function handleModalSave(): void {
+async function handleModalSave(): Promise<void> {
     if (!modal || !currentSelectionData) return;
 
     const titleInput = modal.querySelector(".title-input") as HTMLInputElement;
     const tagsInput = modal.querySelector(".tags-input") as HTMLInputElement;
     const notesInput = modal.querySelector(".notes-input") as HTMLTextAreaElement;
+    const saveBtn = modal.querySelector(".btn-save") as HTMLButtonElement;
 
     const title = titleInput?.value.trim() || "";
     if (!title) return;
@@ -435,10 +566,34 @@ function handleModalSave(): void {
         sourceTitle: currentSelectionData.pageTitle,
     };
 
-    console.log("%c[RecipeVault] Capture payload ready:", "color: blue; font-weight: bold", payload);
+    // Show loading state
+    if (saveBtn) {
+        saveBtn.classList.add("loading");
+        saveBtn.textContent = "Saving...";
+    }
 
-    // TODO: Quest 3.4 - Send payload to background worker / API
-    closeModal();
+    console.log("[RecipeVault] Submitting recipe...", payload);
+
+    const result = await saveRecipeToAPI(payload);
+
+    if (result.success) {
+        showToast("Saved ✓", "success");
+        closeModal();
+    } else {
+        // Reset button
+        if (saveBtn) {
+            saveBtn.classList.remove("loading");
+            saveBtn.textContent = "Save";
+        }
+
+        if (result.error === "AUTH_REQUIRED") {
+            showToast(`Please log in at ${LOGIN_URL}`, "warning", 6000);
+        } else if (result.error === "NETWORK_ERROR") {
+            showToast("Network error. Check your connection.", "error");
+        } else {
+            showToast(result.error || "Save failed", "error");
+        }
+    }
 }
 
 // ============================================
@@ -472,7 +627,7 @@ function positionButton(boundingBox: SelectionData["boundingBox"]): void {
 }
 
 function showButton(data: SelectionData): void {
-    if (isModalOpen) return; // Don't show button if modal is open
+    if (isModalOpen) return;
 
     if (!saveButton) {
         initShadowDOM();
@@ -555,7 +710,7 @@ function getSelectionData(): SelectionData | null {
 }
 
 function handleSelectionEvent(): void {
-    if (isModalOpen) return; // Don't update while modal is open
+    if (isModalOpen) return;
 
     const data = getSelectionData();
 
@@ -627,4 +782,4 @@ document.addEventListener("mousedown", (e) => {
 // Initialize
 initShadowDOM();
 
-console.log("[RecipeVault] Selection detector + Save button + Modal active");
+console.log("[RecipeVault] Selection detector + Save button + Modal + API active");
