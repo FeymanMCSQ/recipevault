@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "noEmit": true,
+        "types": [
+            "node"
+        ],
+        "composite": true
+    },
+    "include": [
+        "prisma.config.ts",
+        "next.config.js",
+        "tailwind.config.ts",
+        "postcss.config.js"
+    ]
+}

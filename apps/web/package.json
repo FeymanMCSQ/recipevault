@@ -1,0 +1,32 @@
+{
+    "name": "@recipevault/web",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "@prisma/client": "^7.3.0",
+        "@recipevault/shared": "workspace:*",
+        "next": "14.1.0",
+        "next-auth": "^4.24.13",
+        "react": "^18",
+        "react-dom": "^18"
+    },
+    "devDependencies": {
+        "@prisma/config": "^7.3.0",
+        "@types/node": "^20.19.32",
+        "@types/react": "^18",
+        "@types/react-dom": "^18",
+        "autoprefixer": "^10.0.1",
+        "dotenv": "^17.2.3",
+        "postcss": "^8",
+        "prisma": "^7.3.0",
+        "tailwindcss": "^3.3.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5"
+    }
+}
