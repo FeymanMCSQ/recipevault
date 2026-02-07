@@ -17,7 +17,7 @@ model Recipe {
   capturedText String
   
   // AI-processed structured fields
-  ingredients  String[] @default([])
+  ingredients  Json     @default("[]")  // Array of { component: string, items: string[] }
   instructions String[] @default([])
   suggestions  String[] @default([])
   aiTags       String[] @default([])

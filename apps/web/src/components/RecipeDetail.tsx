@@ -146,14 +146,25 @@ export function RecipeDetail({ recipe: initialRecipe }: RecipeDetailProps) {
                         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                             <span className="text-xl">🥗</span> Ingredients
                         </h2>
-                        <ul className="space-y-2">
-                            {recipe.ingredients.map((ingredient, idx) => (
-                                <li key={idx} className="flex items-start gap-3">
-                                    <span className="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></span>
-                                    <span className="text-gray-700">{ingredient}</span>
-                                </li>
+                        <div className="space-y-6">
+                            {(recipe.ingredients as { component: string; items: string[] }[]).map((group, groupIdx) => (
+                                <div key={groupIdx}>
+                                    {recipe.ingredients.length > 1 && (
+                                        <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
+                                            {group.component}
+                                        </h3>
+                                    )}
+                                    <ul className="space-y-2">
+                                        {group.items.map((ingredient: string, idx: number) => (
+                                            <li key={idx} className="flex items-start gap-3">
+                                                <span className="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></span>
+                                                <span className="text-gray-700">{ingredient}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     </div>
                 )}
 

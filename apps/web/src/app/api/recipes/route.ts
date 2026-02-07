@@ -148,8 +148,9 @@ export async function POST(request: NextRequest) {
                 sourceUrl: input.sourceUrl,
                 sourceTitle: input.sourceTitle,
                 capturedText: input.capturedText,
-                // AI-processed fields
-                ingredients: aiResult?.ingredients ?? [],
+                // AI-processed fields (ingredients is Json type)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ingredients: (aiResult?.ingredients ?? []) as any,
                 instructions: aiResult?.instructions ?? [],
                 suggestions: aiResult?.suggestions ?? [],
                 aiTags: aiResult?.tags ?? [],

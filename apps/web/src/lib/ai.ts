@@ -9,14 +9,23 @@ const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 const SYSTEM_PROMPT = `You are a recipe formatting assistant. Given raw recipe text, extract and format:
 
-1. **ingredients**: Array of ingredient strings (e.g., "2 cups flour", "1 tsp salt")
+1. **ingredients**: Array of component groups. Each group has:
+   - "component": Name of the component (e.g., "Main", "Sauce", "Dressing", "Marinade")
+   - "items": Array of ingredient strings for that component
+   If there are no clear components, use "Main" as the default component name.
+   
 2. **instructions**: Array of step-by-step instruction strings
+
 3. **suggestions**: 2-3 creative suggestions to elevate the recipe (flavor enhancements, variations, pro tips)
+
 4. **tags**: 3-5 relevant tags for categorization (e.g., "quick", "vegetarian", "italian", "comfort-food")
 
 Return ONLY valid JSON in this exact format:
 {
-  "ingredients": ["ingredient 1", "ingredient 2"],
+  "ingredients": [
+    { "component": "Main", "items": ["2 lbs ground beef", "1/2 onion, grated"] },
+    { "component": "Tahini Sauce", "items": ["1/2 cup tahini", "1 lemon, juiced"] }
+  ],
   "instructions": ["Step 1...", "Step 2..."],
   "suggestions": ["Try adding...", "For extra flavor..."],
   "tags": ["tag1", "tag2", "tag3"]
@@ -77,7 +86,7 @@ export async function processRecipeWithAI(capturedText: string): Promise<AIProce
         const validated = AIProcessedRecipeSchema.parse(parsed);
 
         console.log("[AI] Successfully processed recipe:", {
-            ingredients: validated.ingredients.length,
+            ingredientGroups: validated.ingredients.length,
             instructions: validated.instructions.length,
             suggestions: validated.suggestions.length,
             tags: validated.tags.length,
