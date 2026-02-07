@@ -178,15 +178,72 @@ document.addEventListener("mousedown", (e) => {
     }
 });
 
-// Listen for background sync notifications
-chrome.runtime.onMessage.addListener((message) => {
+// Listen for messages from popup and background
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    // Handle page extraction request from popup
+    if (message.action === "EXTRACT_PAGE") {
+        try {
+            const content = extractPageContent();
+            sendResponse({
+                success: true,
+                title: document.title,
+                content: content,
+            });
+        } catch (error) {
+            sendResponse({
+                success: false,
+                error: error instanceof Error ? error.message : "Extraction failed",
+            });
+        }
+        return true; // Keep channel open for async response
+    }
+
+    // Handle background sync notifications
     if (message.action === "QUEUE_SYNCED" && message.synced > 0) {
-        // Dynamic import to avoid circular dependency
         import("./toast").then(({ showToast }) => {
             showToast(`Synced ${message.synced} recipe${message.synced > 1 ? "s" : ""} ✓`, "success");
         });
     }
+
+    return false;
 });
+
+// Extract main content from page (used by popup's one-click save)
+function extractPageContent(): string {
+    // Try to find recipe-specific content first
+    const recipeSelectors = [
+        '[itemtype*="Recipe"]',
+        '[class*="recipe"]',
+        '[id*="recipe"]',
+        'article',
+        'main',
+        '.post-content',
+        '.entry-content',
+        '.content',
+    ];
+
+    for (const selector of recipeSelectors) {
+        const element = document.querySelector(selector);
+        if (element && element.textContent && element.textContent.trim().length > 100) {
+            const text = cleanText(element.textContent);
+            if (text.length > 100) {
+                console.log(`[RecipeVault] Extracted from: ${selector}`);
+                return text.slice(0, 50000); // Max 50k chars
+            }
+        }
+    }
+
+    // Fallback to body content
+    const body = document.body.textContent || '';
+    return cleanText(body).slice(0, 50000);
+}
+
+function cleanText(text: string): string {
+    return text
+        .replace(/\s+/g, ' ')           // Normalize whitespace
+        .replace(/\n{3,}/g, '\n\n')     // Max 2 newlines
+        .trim();
+}
 
 // ============================================
 // SPA Support - Re-inject if removed
