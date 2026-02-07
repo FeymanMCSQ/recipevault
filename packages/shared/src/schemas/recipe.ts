@@ -17,7 +17,7 @@ export const RecipeSchema = z.object({
     notes: z.string().max(2000).optional().default(""),
     sourceUrl: z.string().url(),
     sourceTitle: z.string().max(200).optional().default(""),
-    capturedText: z.string().min(1).max(50000),
+    capturedText: z.string().min(1).max(100000),
     // AI-processed fields
     ingredients: z.array(IngredientGroupSchema).default([]),
     instructions: z.array(z.string()).default([]),
@@ -37,7 +37,8 @@ export const CreateRecipeInputSchema = z.object({
     notes: z.string().max(2000).optional().default(""),
     sourceUrl: z.string().url(),
     sourceTitle: z.string().max(200).optional().default(""),
-    capturedText: z.string().min(1).max(50000),
+    capturedText: z.string().min(1).max(100000),
+    transcript: z.string().optional(), // Optional transcript text for context
 });
 
 export type CreateRecipeInput = z.infer<typeof CreateRecipeInputSchema>;

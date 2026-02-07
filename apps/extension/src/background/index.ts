@@ -16,6 +16,7 @@ interface RecipePayload {
     capturedText: string;
     sourceUrl: string;
     sourceTitle: string;
+    transcript?: string;
 }
 
 interface QueuedRecipe {

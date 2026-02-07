@@ -130,8 +130,15 @@ export async function POST(request: NextRequest) {
 
     const input = parseResult.data;
 
+    // Combine captured text with transcript for AI processing and storage
+    // We merge them here because we don't have a separate transcript column in DB yet
+    const fullText = input.transcript
+        ? `${input.capturedText}\n\n=== VIDEO TRANSCRIPT ===\n${input.transcript}`.slice(0, 100000)
+        : input.capturedText;
+
     // 3. Process with AI (non-blocking - don't fail if AI fails)
-    const aiResult = await processRecipeWithAI(input.capturedText);
+    // Pass the full context to AI
+    const aiResult = await processRecipeWithAI(fullText);
 
     // Merge user tags with AI tags (deduplicated)
     const allTags = aiResult
@@ -147,7 +154,7 @@ export async function POST(request: NextRequest) {
                 notes: input.notes,
                 sourceUrl: input.sourceUrl,
                 sourceTitle: input.sourceTitle,
-                capturedText: input.capturedText,
+                capturedText: fullText, // Store the combined text
                 // AI-processed fields (ingredients is Json type)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ingredients: (aiResult?.ingredients ?? []) as any,

@@ -12,6 +12,7 @@ import {
 import { hideButton } from "./button";
 import { showToast } from "./toast";
 import { saveRecipeToAPI } from "./api";
+import { extractYouTubeSubtitles, isYouTubePage } from "./youtube";
 
 const LOGIN_URL = "http://localhost:3000";
 
@@ -78,6 +79,32 @@ export async function handleModalSave(): Promise<void> {
 
     const notes = notesInput?.value.trim() || "";
 
+    if (saveBtn) {
+        saveBtn.classList.add("loading");
+        saveBtn.textContent = "Saving...";
+    }
+
+    let transcript: string | undefined;
+
+    // Fetch transcript if on YouTube
+    if (isYouTubePage()) {
+        if (saveBtn) saveBtn.textContent = "Fetching transcript...";
+        console.log("[RecipeVault] Fetching usage transcript...");
+        try {
+            const result = await extractYouTubeSubtitles();
+            if (result.success && result.transcript) {
+                transcript = result.transcript;
+                console.log("[RecipeVault] Transcript fetched, length:", transcript.length);
+            } else {
+                console.warn("[RecipeVault] Failed to fetch transcript:", result.error);
+                // We don't block saving, just proceed without transcript
+            }
+        } catch (e) {
+            console.error("[RecipeVault] Error fetching transcript:", e);
+        }
+        if (saveBtn) saveBtn.textContent = "Saving...";
+    }
+
     const payload: CapturePayload = {
         title,
         tags,
@@ -85,12 +112,8 @@ export async function handleModalSave(): Promise<void> {
         capturedText: currentSelectionData.text,
         sourceUrl: currentSelectionData.sourceUrl,
         sourceTitle: currentSelectionData.pageTitle,
+        transcript,
     };
-
-    if (saveBtn) {
-        saveBtn.classList.add("loading");
-        saveBtn.textContent = "Saving...";
-    }
 
     console.log("[RecipeVault] Submitting recipe...", payload);
     const result = await saveRecipeToAPI(payload);

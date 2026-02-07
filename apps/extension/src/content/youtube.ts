@@ -12,7 +12,7 @@ export interface YouTubeSubtitleResult {
 }
 
 // Transcript worker URL - configured via extension storage or defaults
-const TRANSCRIPT_WORKER_URL = 'https://transcript-worker.up.railway.app';
+const TRANSCRIPT_WORKER_URL = 'https://transcript-worker-production-979c.up.railway.app';
 
 /**
  * Check if current page is a YouTube video page

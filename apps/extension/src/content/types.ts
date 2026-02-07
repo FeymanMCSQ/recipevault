@@ -21,4 +21,5 @@ export interface CapturePayload {
     capturedText: string;
     sourceUrl: string;
     sourceTitle: string;
+    transcript?: string;
 }
