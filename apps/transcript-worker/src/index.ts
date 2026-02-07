@@ -27,7 +27,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Path to yt-dlp binary (bundled with this service)
-const YT_DLP_PATH = process.env.YT_DLP_PATH || path.join(__dirname, '..', 'yt-dlp');
+const YT_DLP_PATH = process.env.YT_DLP_PATH || 'yt-dlp';
 
 // CORS configuration
 app.use(cors({
@@ -110,6 +110,7 @@ app.get('/transcript', async (req, res) => {
 
         const cmd = [
             YT_DLP_PATH,
+            '--impersonate', 'chrome',
             '--skip-download',
             '--write-auto-sub',
             '--write-sub',
