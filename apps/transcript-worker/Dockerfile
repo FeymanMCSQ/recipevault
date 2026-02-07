@@ -1,5 +1,5 @@
 # Transcript Worker - yt-dlp based YouTube subtitle extraction
-FROM node:20-slim
+FROM node:22-slim
 
 # Install dependencies including python, ffmpeg, curl, unzip
 RUN apt-get update && apt-get install -y \
