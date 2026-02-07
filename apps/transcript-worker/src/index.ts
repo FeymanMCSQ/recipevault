@@ -126,28 +126,42 @@ app.get('/transcript', async (req, res) => {
         const denoPath = process.env.DENO_PATH || `${process.env.HOME}/.deno/bin`;
         const envPath = `${denoPath}:${process.env.PATH}`;
 
+        let execOutput = { stdout: '', stderr: '' };
+
         try {
-            await execAsync(cmd, {
+            execOutput = await execAsync(cmd, {
                 timeout: 90000,
                 env: { ...process.env, PATH: envPath },
             });
-        } catch (execError) {
+        } catch (error) {
+            const execError = error as any;
             // yt-dlp may exit with code 1 but still produce output (warnings)
-            // Check if subtitle file was created anyway
-            console.log(`[Transcript] yt-dlp exited with warning, checking for output...`);
+            console.log(`[Transcript] yt-dlp exited with warning/error`);
+            execOutput = {
+                stdout: execError.stdout || '',
+                stderr: execError.stderr || execError.message
+            };
         }
 
         // Find the generated subtitle file
         const files = await readdir(tempDir);
         const subtitleFile = files.find(f =>
-            f.startsWith(`transcript_${videoId}`) && f.endsWith('.vtt')
+            f.startsWith(sessionId) && f.endsWith('.vtt')
         );
 
         if (!subtitleFile) {
             console.log('[Transcript] No subtitle file generated');
+            // Log the output for debugging
+            console.log('[Transcript] stdout:', execOutput.stdout);
+            console.log('[Transcript] stderr:', execOutput.stderr);
+
             return res.status(404).json({
                 error: 'No subtitles available for this video',
                 videoId,
+                debug: {
+                    stdout: execOutput.stdout.slice(-1000), // Last 1000 chars
+                    stderr: execOutput.stderr.slice(-1000),
+                }
             });
         }
 
