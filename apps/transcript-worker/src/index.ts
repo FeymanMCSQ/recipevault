@@ -18,6 +18,7 @@ import { readFile, unlink, readdir, writeFile } from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
+import { createHash } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,19 +47,33 @@ app.get('/health', (req, res) => {
 app.get('/check', async (req, res) => {
     try {
         const { stdout } = await execAsync(`${YT_DLP_PATH} --version`);
+        const cookieSummary = process.env.YOUTUBE_COOKIES
+            ? summarizeCookieEnv(process.env.YOUTUBE_COOKIES)
+            : null;
+        const denoVersion = await getCommandVersion('deno --version');
+
         res.json({
             installed: true,
             version: stdout.trim(),
             path: YT_DLP_PATH,
+            deno: denoVersion,
+            cookies: cookieSummary,
         });
     } catch (error) {
         // Fallback to system yt-dlp
         try {
             const { stdout } = await execAsync('yt-dlp --version');
+            const cookieSummary = process.env.YOUTUBE_COOKIES
+                ? summarizeCookieEnv(process.env.YOUTUBE_COOKIES)
+                : null;
+            const denoVersion = await getCommandVersion('deno --version');
+
             res.json({
                 installed: true,
                 version: stdout.trim(),
                 path: 'system',
+                deno: denoVersion,
+                cookies: cookieSummary,
             });
         } catch {
             res.status(500).json({
@@ -97,15 +112,29 @@ app.get('/transcript', async (req, res) => {
         // 2. Env var COOKIES_FILE (path to existing file)
         // 3. Browser cookies (local dev only)
         let cookieArgs = '';
+        let cookieSource: 'YOUTUBE_COOKIES' | 'COOKIES_FILE' | 'browser' | 'none' = 'none';
+        let cookieDebug: ReturnType<typeof summarizeCookieEnv> | null = null;
 
         if (process.env.YOUTUBE_COOKIES) {
             cookieFilePath = path.join(tempDir, `${sessionId}_cookies.txt`);
-            await writeFile(cookieFilePath, process.env.YOUTUBE_COOKIES, 'utf-8');
+            const normalizedCookieContent = normalizeCookieEnv(process.env.YOUTUBE_COOKIES);
+            const summary = summarizeCookieEnv(normalizedCookieContent);
+            cookieSource = 'YOUTUBE_COOKIES';
+            cookieDebug = summary;
+
+            console.log(`[Transcript] Cookie source: YOUTUBE_COOKIES (${summary.cookieLines} cookie lines, ${summary.invalidLines} invalid lines)`);
+            await writeFile(cookieFilePath, normalizedCookieContent, { encoding: 'utf-8', mode: 0o600 });
             cookieArgs = `--cookies "${cookieFilePath}"`;
         } else if (process.env.COOKIES_FILE) {
+            console.log('[Transcript] Cookie source: COOKIES_FILE');
+            cookieSource = 'COOKIES_FILE';
             cookieArgs = `--cookies "${process.env.COOKIES_FILE}"`;
         } else if (process.env.USE_BROWSER_COOKIES === 'true') {
+            console.log('[Transcript] Cookie source: browser');
+            cookieSource = 'browser';
             cookieArgs = '--cookies-from-browser chrome';
+        } else {
+            console.log('[Transcript] Cookie source: none');
         }
 
         const cmd = [
@@ -125,7 +154,8 @@ app.get('/transcript', async (req, res) => {
 
         // Include deno in PATH for yt-dlp JavaScript challenge solving
         const denoPath = process.env.DENO_PATH || `${process.env.HOME}/.deno/bin`;
-        const envPath = `${denoPath}:${process.env.PATH}`;
+        const denoBinPath = denoPath.endsWith('/deno') ? path.dirname(denoPath) : denoPath;
+        const envPath = `${denoBinPath}:${process.env.PATH}`;
 
         let execOutput = { stdout: '', stderr: '' };
 
@@ -160,6 +190,9 @@ app.get('/transcript', async (req, res) => {
                 error: 'No subtitles available for this video',
                 videoId,
                 debug: {
+                    cookiesLoaded: Boolean(cookieArgs),
+                    cookieSource,
+                    cookieSummary: cookieDebug,
                     stdout: execOutput.stdout.slice(-1000), // Last 1000 chars
                     stderr: execOutput.stderr.slice(-1000),
                 }
@@ -243,6 +276,103 @@ function parseVTT(content: string): string {
     }
 
     return textLines.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Railway/UIs often flatten tabs/newlines or store escaped \n/\t sequences.
+ * Normalize to valid Netscape cookie-file formatting before passing to yt-dlp.
+ */
+function normalizeCookieEnv(raw: string): string {
+    let normalized = raw.trim();
+
+    if (
+        (normalized.startsWith('"') && normalized.endsWith('"')) ||
+        (normalized.startsWith("'") && normalized.endsWith("'"))
+    ) {
+        normalized = normalized.slice(1, -1);
+    }
+
+    normalized = normalized
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t');
+
+    const lines = normalized.split('\n').map(line => {
+        const trimmed = line.trim();
+
+        if (!trimmed || trimmed.startsWith('#')) {
+            return trimmed;
+        }
+
+        // Keep already-valid tab-separated cookie lines as-is.
+        if (trimmed.includes('\t')) {
+            return trimmed;
+        }
+
+        const parts = trimmed.split(/\s+/);
+        if (parts.length < 7) {
+            return trimmed;
+        }
+
+        const [domain, includeSubdomains, cookiePath, secure, expires, name, ...valueParts] = parts;
+        return [domain, includeSubdomains, cookiePath, secure, expires, name, valueParts.join(' ')].join('\t');
+    });
+
+    if (!lines.some(line => line.startsWith('# Netscape HTTP Cookie File'))) {
+        lines.unshift('# Netscape HTTP Cookie File');
+    }
+
+    return `${lines.join('\n').trim()}\n`;
+}
+
+function summarizeCookieEnv(raw: string): {
+    present: boolean;
+    lines: number;
+    cookieLines: number;
+    invalidLines: number;
+    sha256: string;
+} {
+    const lines = raw
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n');
+
+    let cookieLines = 0;
+    let invalidLines = 0;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) {
+            continue;
+        }
+
+        cookieLines += 1;
+        const fields = trimmed.includes('\t') ? trimmed.split('\t') : trimmed.split(/\s+/);
+        if (fields.length < 7) {
+            invalidLines += 1;
+        }
+    }
+
+    const sha256 = createHash('sha256').update(raw).digest('hex').slice(0, 12);
+
+    return {
+        present: true,
+        lines: lines.length,
+        cookieLines,
+        invalidLines,
+        sha256,
+    };
+}
+
+async function getCommandVersion(command: string): Promise<string | null> {
+    try {
+        const { stdout } = await execAsync(command);
+        const firstLine = stdout.split('\n')[0]?.trim();
+        return firstLine || null;
+    } catch {
+        return null;
+    }
 }
 
 app.listen(PORT, () => {

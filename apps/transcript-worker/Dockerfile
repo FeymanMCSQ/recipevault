@@ -22,13 +22,17 @@ RUN pip3 install --no-cache-dir --break-system-packages "yt-dlp[default,curl-cff
 RUN python3 -c "import curl_cffi; print('curl_cffi installed successfully')"
 
 # Install Deno (required for yt-dlp JS challenges)
-ARG DENO_VERSION=1.40.2
+# yt-dlp EJS challenge solver requires Deno >= 2.0.0
+ARG DENO_VERSION=2.5.2
 RUN curl -fsSL https://deno.land/x/install/install.sh | sh -s v${DENO_VERSION} \
     && mv /root/.deno/bin/deno /usr/local/bin/deno
 
+# Verify deno is available for yt-dlp EJS solver
+RUN deno --version
+
 # Set environment variables
 ENV YT_DLP_PATH=yt-dlp
-ENV DENO_PATH=/usr/local/bin/deno
+ENV DENO_PATH=/usr/local/bin
 
 WORKDIR /app
 
