@@ -131,6 +131,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         sourceUrl: recipe.sourceUrl,
         sourceTitle: recipe.sourceTitle,
         capturedText: recipe.capturedText,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        suggestions: recipe.suggestions,
+        aiTags: recipe.aiTags,
         createdAt: recipe.createdAt.toISOString(),
         updatedAt: recipe.updatedAt.toISOString(),
     });

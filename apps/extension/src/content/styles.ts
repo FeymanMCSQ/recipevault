@@ -170,4 +170,17 @@ export const contentStyles = `
     .toast-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
     .toast svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
     .toast a { color: white; text-decoration: underline; font-weight: 600; }
+    .toast-retry {
+        margin-left: auto;
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .toast-retry:hover { background: rgba(255, 255, 255, 0.3); }
 `;

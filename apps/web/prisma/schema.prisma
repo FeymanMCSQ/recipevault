@@ -15,6 +15,13 @@ model Recipe {
   sourceUrl    String
   sourceTitle  String   @default("")
   capturedText String
+  
+  // AI-processed structured fields
+  ingredients  String[] @default([])
+  instructions String[] @default([])
+  suggestions  String[] @default([])
+  aiTags       String[] @default([])
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

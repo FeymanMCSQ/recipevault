@@ -178,6 +178,46 @@ document.addEventListener("mousedown", (e) => {
     }
 });
 
+// Listen for background sync notifications
+chrome.runtime.onMessage.addListener((message) => {
+    if (message.action === "QUEUE_SYNCED" && message.synced > 0) {
+        // Dynamic import to avoid circular dependency
+        import("./toast").then(({ showToast }) => {
+            showToast(`Synced ${message.synced} recipe${message.synced > 1 ? "s" : ""} ✓`, "success");
+        });
+    }
+});
+
+// ============================================
+// SPA Support - Re-inject if removed
+// ============================================
+
+function ensureShadowHostExists(): void {
+    const existing = document.getElementById("recipevault-shadow-host");
+    if (!existing) {
+        console.log("[RecipeVault] Shadow host removed, re-initializing...");
+        // Reset state
+        import("./state").then(({ setShadowHost, setShadowRoot, setSaveButton, setModal, setToastContainer }) => {
+            setShadowHost(null as unknown as HTMLElement);
+            setShadowRoot(null as unknown as ShadowRoot);
+            setSaveButton(null as unknown as HTMLButtonElement);
+            setModal(null as unknown as HTMLElement);
+            setToastContainer(null as unknown as HTMLElement);
+            initShadowDOM();
+        });
+    }
+}
+
+// Watch for DOM changes that might remove our host
+const observer = new MutationObserver(() => {
+    ensureShadowHostExists();
+});
+
+observer.observe(document.documentElement, {
+    childList: true,
+    subtree: false, // Only watch direct children of <html>
+});
+
 // Initialize
 initShadowDOM();
-console.log("[RecipeVault] Ready");
+console.log("[RecipeVault] Ready (SPA-compatible)");

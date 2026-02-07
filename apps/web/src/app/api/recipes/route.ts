@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/db/client";
 import { CreateRecipeInputSchema, ListRecipesQuerySchema } from "@recipevault/shared";
+import { processRecipeWithAI } from "@/lib/ai";
 
 // Error response helper
 function errorResponse(
@@ -129,20 +130,33 @@ export async function POST(request: NextRequest) {
 
     const input = parseResult.data;
 
-    // 3. Create recipe in database
+    // 3. Process with AI (non-blocking - don't fail if AI fails)
+    const aiResult = await processRecipeWithAI(input.capturedText);
+
+    // Merge user tags with AI tags (deduplicated)
+    const allTags = aiResult
+        ? Array.from(new Set([...input.tags, ...aiResult.tags]))
+        : input.tags;
+
+    // 4. Create recipe in database
     try {
         const recipe = await prisma.recipe.create({
             data: {
                 title: input.title,
-                tags: input.tags,
+                tags: allTags,
                 notes: input.notes,
                 sourceUrl: input.sourceUrl,
                 sourceTitle: input.sourceTitle,
                 capturedText: input.capturedText,
+                // AI-processed fields
+                ingredients: aiResult?.ingredients ?? [],
+                instructions: aiResult?.instructions ?? [],
+                suggestions: aiResult?.suggestions ?? [],
+                aiTags: aiResult?.tags ?? [],
             },
         });
 
-        // 4. Return created recipe
+        // 5. Return created recipe
         return NextResponse.json(
             {
                 id: recipe.id,
@@ -152,6 +166,10 @@ export async function POST(request: NextRequest) {
                 sourceUrl: recipe.sourceUrl,
                 sourceTitle: recipe.sourceTitle,
                 capturedText: recipe.capturedText,
+                ingredients: recipe.ingredients,
+                instructions: recipe.instructions,
+                suggestions: recipe.suggestions,
+                aiTags: recipe.aiTags,
                 createdAt: recipe.createdAt.toISOString(),
                 updatedAt: recipe.updatedAt.toISOString(),
             },

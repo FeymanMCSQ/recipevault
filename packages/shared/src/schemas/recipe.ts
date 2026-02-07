@@ -10,6 +10,11 @@ export const RecipeSchema = z.object({
     sourceUrl: z.string().url(),
     sourceTitle: z.string().max(200).optional().default(""),
     capturedText: z.string().min(1).max(50000),
+    // AI-processed fields
+    ingredients: z.array(z.string()).default([]),
+    instructions: z.array(z.string()).default([]),
+    suggestions: z.array(z.string()).default([]),
+    aiTags: z.array(TagSchema).default([]),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
 });
@@ -79,3 +84,13 @@ export const DeleteRecipeResponseSchema = z.object({
 });
 
 export type DeleteRecipeResponse = z.infer<typeof DeleteRecipeResponseSchema>;
+
+// AI processing result schema
+export const AIProcessedRecipeSchema = z.object({
+    ingredients: z.array(z.string()),
+    instructions: z.array(z.string()),
+    suggestions: z.array(z.string()),
+    tags: z.array(TagSchema),
+});
+
+export type AIProcessedRecipe = z.infer<typeof AIProcessedRecipeSchema>;

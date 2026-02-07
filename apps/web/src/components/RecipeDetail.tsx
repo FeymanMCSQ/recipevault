@@ -59,6 +59,10 @@ export function RecipeDetail({ recipe: initialRecipe }: RecipeDetailProps) {
         }
     }
 
+    const hasIngredients = recipe.ingredients && recipe.ingredients.length > 0;
+    const hasInstructions = recipe.instructions && recipe.instructions.length > 0;
+    const hasSuggestions = recipe.suggestions && recipe.suggestions.length > 0;
+
     return (
         <div className="max-w-3xl mx-auto">
             {/* Back Button */}
@@ -131,18 +135,76 @@ export function RecipeDetail({ recipe: initialRecipe }: RecipeDetailProps) {
                 {/* Notes */}
                 {recipe.notes && (
                     <div className="p-6 border-b border-gray-100 bg-amber-50/50">
-                        <h2 className="text-sm font-semibold text-amber-800 mb-2">Notes</h2>
+                        <h2 className="text-sm font-semibold text-amber-800 mb-2">📝 Notes</h2>
                         <p className="text-gray-700 whitespace-pre-wrap">{recipe.notes}</p>
                     </div>
                 )}
 
-                {/* Captured Text */}
-                <div className="p-6">
-                    <h2 className="text-sm font-semibold text-gray-500 mb-3">Captured Recipe</h2>
-                    <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                {/* Ingredients Section */}
+                {hasIngredients && (
+                    <div className="p-6 border-b border-gray-100">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="text-xl">🥗</span> Ingredients
+                        </h2>
+                        <ul className="space-y-2">
+                            {recipe.ingredients.map((ingredient, idx) => (
+                                <li key={idx} className="flex items-start gap-3">
+                                    <span className="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></span>
+                                    <span className="text-gray-700">{ingredient}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Instructions Section */}
+                {hasInstructions && (
+                    <div className="p-6 border-b border-gray-100">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="text-xl">👨‍🍳</span> Instructions
+                        </h2>
+                        <ol className="space-y-4">
+                            {recipe.instructions.map((step, idx) => (
+                                <li key={idx} className="flex gap-4">
+                                    <span className="flex-shrink-0 w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-semibold text-sm">
+                                        {idx + 1}
+                                    </span>
+                                    <p className="text-gray-700 pt-1">{step}</p>
+                                </li>
+                            ))}
+                        </ol>
+                    </div>
+                )}
+
+                {/* Suggestions Section */}
+                {hasSuggestions && (
+                    <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-purple-50 to-indigo-50">
+                        <h2 className="text-lg font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                            <span className="text-xl">✨</span> AI Suggestions
+                        </h2>
+                        <ul className="space-y-3">
+                            {recipe.suggestions.map((suggestion, idx) => (
+                                <li key={idx} className="flex items-start gap-3 p-3 bg-white/60 rounded-lg">
+                                    <span className="text-purple-500">💡</span>
+                                    <span className="text-gray-700">{suggestion}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Original Captured Text (collapsible fallback) */}
+                <details className="p-6 group">
+                    <summary className="text-sm font-semibold text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-2">
+                        <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                        Original Captured Text
+                    </summary>
+                    <div className="mt-4 prose prose-sm max-w-none text-gray-600 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
                         {recipe.capturedText}
                     </div>
-                </div>
+                </details>
             </article>
 
             {/* Edit Modal */}

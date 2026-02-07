@@ -7,7 +7,6 @@ import {
     modal,
     currentSelectionData,
     setCurrentSelectionData,
-    isModalOpen,
     setIsModalOpen,
 } from "./state";
 import { hideButton } from "./button";
@@ -99,6 +98,10 @@ export async function handleModalSave(): Promise<void> {
     if (result.success) {
         showToast("Saved ✓", "success");
         closeModal();
+    } else if (result.queued) {
+        // Saved offline for later sync
+        showToast("Saved offline • Will sync when online", "offline", 5000, true);
+        closeModal();
     } else {
         if (saveBtn) {
             saveBtn.classList.remove("loading");
@@ -107,6 +110,8 @@ export async function handleModalSave(): Promise<void> {
 
         if (result.error === "AUTH_REQUIRED") {
             showToast(`Please log in at ${LOGIN_URL}`, "warning", 6000);
+        } else if (result.error === "CONTEXT_INVALIDATED") {
+            showToast("Extension updated. Please refresh the page.", "warning", 8000);
         } else if (result.error === "NETWORK_ERROR") {
             showToast("Network error. Check your connection.", "error");
         } else {
