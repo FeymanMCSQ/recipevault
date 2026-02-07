@@ -9,12 +9,14 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "@dofy/youtube-caption-extractor": "^1.5.11",
         "@prisma/client": "^7.3.0",
         "@recipevault/shared": "workspace:*",
         "next": "14.1.0",
         "next-auth": "^4.24.13",
         "react": "^18",
-        "react-dom": "^18"
+        "react-dom": "^18",
+        "youtube-transcript": "^1.2.1"
     },
     "devDependencies": {
         "@prisma/config": "^7.3.0",

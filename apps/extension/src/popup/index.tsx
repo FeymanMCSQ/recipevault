@@ -1,29 +1,99 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 
 type Status = 'idle' | 'extracting' | 'saving' | 'success' | 'error';
+type PageType = 'loading' | 'youtube' | 'regular' | 'unsupported';
 
 function Popup() {
     const [status, setStatus] = useState<Status>('idle');
     const [message, setMessage] = useState('');
+    const [pageType, setPageType] = useState<PageType>('loading');
+    const [videoTitle, setVideoTitle] = useState('');
+
+    useEffect(() => {
+        detectPageType();
+    }, []);
+
+    async function detectPageType() {
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tab?.url) {
+                setPageType('unsupported');
+                return;
+            }
+
+            if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+                setPageType('unsupported');
+                return;
+            }
+
+            if (tab.url.includes('youtube.com/watch')) {
+                setPageType('youtube');
+                // Try to get video title
+                const title = tab.title?.replace(' - YouTube', '').trim() || '';
+                setVideoTitle(title);
+            } else {
+                setPageType('regular');
+            }
+        } catch {
+            setPageType('unsupported');
+        }
+    }
+
+    async function handleSaveYouTube() {
+        setStatus('extracting');
+        setMessage('Extracting subtitles...');
+
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tab?.id || !tab.url) throw new Error('No active tab');
+
+            // Ask content script to extract YouTube subtitles
+            const response = await chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_YOUTUBE' });
+
+            if (!response?.success) {
+                throw new Error(response?.error || 'Failed to extract subtitles');
+            }
+
+            setStatus('saving');
+            setMessage('Processing with AI...');
+
+            // Send to background for API submission
+            const saveResponse = await chrome.runtime.sendMessage({
+                action: 'SAVE_RECIPE',
+                payload: {
+                    title: response.title || 'YouTube Recipe',
+                    tags: ['youtube', 'video-recipe'],
+                    notes: `Extracted from YouTube video: ${tab.url}`,
+                    capturedText: `[YouTube Video Transcript]\n\n${response.transcript}`,
+                    sourceUrl: tab.url,
+                    sourceTitle: response.title || tab.title || '',
+                },
+            });
+
+            if (saveResponse?.success) {
+                setStatus('success');
+                setMessage('Recipe saved! ✓');
+            } else if (saveResponse?.queued) {
+                setStatus('success');
+                setMessage('Saved offline • Will sync later');
+            } else {
+                throw new Error(saveResponse?.error || 'Save failed');
+            }
+        } catch (err) {
+            setStatus('error');
+            setMessage(err instanceof Error ? err.message : 'Something went wrong');
+        }
+    }
 
     async function handleSavePage() {
         setStatus('extracting');
         setMessage('Extracting page content...');
 
         try {
-            // Get active tab
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (!tab?.id || !tab.url) {
-                throw new Error('No active tab');
-            }
+            if (!tab?.id || !tab.url) throw new Error('No active tab');
 
-            // Skip chrome:// and extension pages
-            if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
-                throw new Error('Cannot extract from this page');
-            }
-
-            // Ask content script to extract page content
             const response = await chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_PAGE' });
 
             if (!response?.success) {
@@ -33,7 +103,6 @@ function Popup() {
             setStatus('saving');
             setMessage('Saving recipe...');
 
-            // Send to background for API submission
             const saveResponse = await chrome.runtime.sendMessage({
                 action: 'SAVE_RECIPE',
                 payload: {
@@ -61,6 +130,8 @@ function Popup() {
         }
     }
 
+    const isLoading = status === 'extracting' || status === 'saving';
+
     return (
         <div style={styles.container}>
             <div style={styles.header}>
@@ -72,26 +143,71 @@ function Popup() {
                 <h1 style={styles.title}>RecipeVault</h1>
             </div>
 
-            <p style={styles.description}>
-                Save any recipe from this page with one click
-            </p>
+            {pageType === 'loading' && (
+                <p style={styles.description}>Loading...</p>
+            )}
 
-            <button
-                onClick={handleSavePage}
-                disabled={status === 'extracting' || status === 'saving'}
-                style={{
-                    ...styles.button,
-                    ...(status === 'success' ? styles.buttonSuccess : {}),
-                    ...(status === 'error' ? styles.buttonError : {}),
-                    ...((status === 'extracting' || status === 'saving') ? styles.buttonLoading : {}),
-                }}
-            >
-                {status === 'idle' && '🍳 Save This Recipe'}
-                {status === 'extracting' && '⏳ Extracting...'}
-                {status === 'saving' && '⏳ Saving...'}
-                {status === 'success' && '✓ Saved!'}
-                {status === 'error' && '✗ Try Again'}
-            </button>
+            {pageType === 'unsupported' && (
+                <p style={styles.description}>
+                    This page is not supported. Navigate to a recipe website or YouTube video.
+                </p>
+            )}
+
+            {pageType === 'youtube' && (
+                <>
+                    <div style={styles.youtubeIndicator}>
+                        <span style={styles.youtubeIcon}>▶</span>
+                        <span>YouTube Video Detected</span>
+                    </div>
+                    {videoTitle && (
+                        <p style={styles.videoTitle}>{videoTitle}</p>
+                    )}
+                    <p style={styles.description}>
+                        Extract recipe from video subtitles
+                    </p>
+                    <button
+                        onClick={handleSaveYouTube}
+                        disabled={isLoading}
+                        style={{
+                            ...styles.button,
+                            ...styles.youtubeButton,
+                            ...(status === 'success' ? styles.buttonSuccess : {}),
+                            ...(status === 'error' ? styles.buttonError : {}),
+                            ...(isLoading ? styles.buttonLoading : {}),
+                        }}
+                    >
+                        {status === 'idle' && '🎬 Save Video Recipe'}
+                        {status === 'extracting' && '⏳ Extracting...'}
+                        {status === 'saving' && '🤖 AI Processing...'}
+                        {status === 'success' && '✓ Saved!'}
+                        {status === 'error' && '✗ Try Again'}
+                    </button>
+                </>
+            )}
+
+            {pageType === 'regular' && (
+                <>
+                    <p style={styles.description}>
+                        Save any recipe from this page with one click
+                    </p>
+                    <button
+                        onClick={handleSavePage}
+                        disabled={isLoading}
+                        style={{
+                            ...styles.button,
+                            ...(status === 'success' ? styles.buttonSuccess : {}),
+                            ...(status === 'error' ? styles.buttonError : {}),
+                            ...(isLoading ? styles.buttonLoading : {}),
+                        }}
+                    >
+                        {status === 'idle' && '🍳 Save This Recipe'}
+                        {status === 'extracting' && '⏳ Extracting...'}
+                        {status === 'saving' && '⏳ Saving...'}
+                        {status === 'success' && '✓ Saved!'}
+                        {status === 'error' && '✗ Try Again'}
+                    </button>
+                </>
+            )}
 
             {message && status !== 'idle' && (
                 <p style={{
@@ -113,7 +229,7 @@ function Popup() {
 
 const styles: Record<string, React.CSSProperties> = {
     container: {
-        width: 300,
+        width: 320,
         padding: 20,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
@@ -144,6 +260,33 @@ const styles: Record<string, React.CSSProperties> = {
         fontWeight: 700,
         color: '#1f2937',
     },
+    youtubeIndicator: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 12px',
+        background: '#fee2e2',
+        borderRadius: 8,
+        marginBottom: 12,
+        fontSize: 13,
+        fontWeight: 600,
+        color: '#dc2626',
+    },
+    youtubeIcon: {
+        fontSize: 16,
+    },
+    videoTitle: {
+        margin: '0 0 12px',
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#374151',
+        lineHeight: 1.4,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical' as const,
+    },
     description: {
         margin: '0 0 16px',
         fontSize: 14,
@@ -162,12 +305,17 @@ const styles: Record<string, React.CSSProperties> = {
         transition: 'all 0.2s ease',
         boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
     },
-    buttonSuccess: {
-        background: 'linear-gradient(135deg, #10b981, #059669)',
-    },
-    buttonError: {
+    youtubeButton: {
         background: 'linear-gradient(135deg, #ef4444, #dc2626)',
         boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+    },
+    buttonSuccess: {
+        background: 'linear-gradient(135deg, #10b981, #059669)',
+        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+    },
+    buttonError: {
+        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
     },
     buttonLoading: {
         opacity: 0.7,

@@ -26,8 +26,9 @@ interface QueuedRecipe {
 }
 
 interface SaveRecipeMessage {
-    action: "SAVE_RECIPE" | "RETRY_QUEUE" | "GET_QUEUE_STATUS";
+    action: "SAVE_RECIPE" | "RETRY_QUEUE" | "GET_QUEUE_STATUS" | "FETCH_CAPTION";
     payload?: RecipePayload;
+    url?: string;
 }
 
 interface SaveRecipeResponse {
@@ -187,6 +188,44 @@ chrome.runtime.onMessage.addListener(
                 sendResponse({ success: true, queueLength: queue.length });
             });
             return true;
+        }
+
+        // Handle YouTube caption fetch (content scripts can't fetch these properly)
+        if (message.action === "FETCH_CAPTION" && message.url) {
+            console.log("[RecipeVault] Background fetching caption:", message.url.slice(0, 80) + "...");
+
+            (async () => {
+                try {
+                    // Get YouTube cookies for authentication
+                    const cookies = await chrome.cookies.getAll({ domain: ".youtube.com" });
+                    const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+                    console.log("[RecipeVault] Got", cookies.length, "YouTube cookies");
+
+                    const response = await fetch(message.url!, {
+                        method: "GET",
+                        headers: {
+                            'Cookie': cookieString,
+                            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                            'Referer': 'https://www.youtube.com/',
+                            'Origin': 'https://www.youtube.com',
+                        },
+                    });
+
+                    console.log("[RecipeVault] Background fetch status:", response.status);
+                    const text = await response.text();
+                    console.log("[RecipeVault] Background fetch length:", text.length);
+                    console.log("[RecipeVault] First 100 chars:", text.slice(0, 100));
+
+                    sendResponse({ success: true, data: text });
+                } catch (error) {
+                    console.error("[RecipeVault] Background fetch error:", error);
+                    sendResponse({ success: false, error: (error as Error).message || "Unknown error" });
+                }
+            })();
+
+            return true; // Async response
         }
     }
 );

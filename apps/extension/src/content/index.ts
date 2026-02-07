@@ -6,6 +6,7 @@
 console.log("%c[RecipeVault] Content script LOADED", "color: green; font-weight: bold; font-size: 14px");
 
 import { contentStyles } from "./styles";
+import { extractYouTubeSubtitles, isYouTubePage } from "./youtube";
 import {
     shadowHost,
     shadowRoot,
@@ -195,6 +196,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 error: error instanceof Error ? error.message : "Extraction failed",
             });
         }
+        return true;
+    }
+
+    // Handle YouTube subtitle extraction
+    if (message.action === "EXTRACT_YOUTUBE") {
+        if (!isYouTubePage()) {
+            sendResponse({ success: false, error: "Not a YouTube video page" });
+            return true;
+        }
+        extractYouTubeSubtitles()
+            .then(sendResponse)
+            .catch(error => {
+                sendResponse({ success: false, error: error.message });
+            });
         return true; // Keep channel open for async response
     }
 
