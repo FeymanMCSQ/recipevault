@@ -30,7 +30,7 @@ COPY package.json ./
 COPY tsconfig.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install -g pnpm && npm install
 
 # Copy source
 COPY src ./src
@@ -42,5 +42,5 @@ RUN npm run build
 # Expose port
 EXPOSE 3001
 
-# Start
+# Start command
 CMD ["npm", "start"]
