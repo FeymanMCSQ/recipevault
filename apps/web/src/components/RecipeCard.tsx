@@ -17,47 +17,55 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     const hostname = new URL(recipe.sourceUrl).hostname.replace("www.", "");
 
     return (
-        <Link href={`/recipes/${recipe.id}`}>
-            <article className="group relative bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-emerald-200 transition-all duration-200 cursor-pointer">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-semibold text-gray-900 text-lg leading-tight group-hover:text-emerald-600 transition-colors line-clamp-2">
-                        {recipe.title}
-                    </h3>
-                </div>
+        <Link href={`/recipes/${recipe.id}`} className="block h-full">
+            <article className="group relative bg-ivory h-full border border-parchment p-6 hover:shadow-card-hover hover:border-wine transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                {/* Paper Texture Overlay */}
+                <div className="absolute inset-0 bg-[#fffdf5] opacity-50 pointer-events-none mix-blend-multiply"></div>
 
-                {/* Source */}
-                <div className="inline-flex items-center gap-1.5 text-sm text-gray-500 mb-3">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    <span className="truncate max-w-[200px]">{hostname}</span>
-                </div>
-
-                {/* Tags */}
-                {recipe.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                        {recipe.tags.slice(0, 4).map((tag) => (
-                            <span
-                                key={tag}
-                                className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full"
-                            >
-                                {tag}
+                <div className="relative z-10">
+                    {/* Header */}
+                    <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="font-sans text-[10px] tracking-widest text-charcoal-muted uppercase opacity-70">
+                                NO. {recipe.id.slice(0, 4)}
                             </span>
-                        ))}
-                        {recipe.tags.length > 4 && (
-                            <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
-                                +{recipe.tags.length - 4}
-                            </span>
-                        )}
+                            <time className="font-sans text-[10px] tracking-widest text-charcoal-muted uppercase opacity-70">
+                                {formattedDate}
+                            </time>
+                        </div>
+                        <h3 className="font-serif font-bold text-xl text-charcoal leading-tight group-hover:text-wine transition-colors line-clamp-2">
+                            {recipe.title}
+                        </h3>
                     </div>
-                )}
 
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <time className="text-xs text-gray-400">{formattedDate}</time>
-                    <span className="text-sm font-medium text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                        View →
+                    {/* Source */}
+                    <div className="mb-6 font-sans text-xs text-charcoal-muted flex items-center gap-1">
+                        <span className="opacity-50">FROM:</span>
+                        <span className="font-bold border-b border-transparent group-hover:border-wine transition-colors">
+                            {hostname.toUpperCase()}
+                        </span>
+                    </div>
+
+                    {/* Tags - Minimal text list */}
+                    {recipe.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs font-sans text-charcoal-muted opacity-80">
+                            {recipe.tags.slice(0, 3).map((tag, i) => (
+                                <span key={tag}>
+                                    {tag}
+                                    {i < Math.min(recipe.tags.length, 3) - 1 && <span className="ml-2 opacity-30">·</span>}
+                                </span>
+                            ))}
+                            {recipe.tags.length > 3 && (
+                                <span className="opacity-50 italic">+{recipe.tags.length - 3}</span>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer / Hover Action */}
+                <div className="relative z-10 pt-4 mt-4 border-t border-parchment/50 flex justify-end">
+                    <span className="font-serif italic text-sm text-wine opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                        View Record →
                     </span>
                 </div>
             </article>
