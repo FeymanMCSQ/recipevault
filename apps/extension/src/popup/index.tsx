@@ -136,9 +136,7 @@ function Popup() {
         <div style={styles.container}>
             <div style={styles.header}>
                 <div style={styles.logo}>
-                    <svg viewBox="0 0 24 24" style={styles.logoIcon}>
-                        <path fill="currentColor" d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" />
-                    </svg>
+                    <img src="/logo.svg" style={styles.logoIcon} alt="RecipeVault" />
                 </div>
                 <h1 style={styles.title}>RecipeVault</h1>
             </div>
@@ -229,57 +227,65 @@ function Popup() {
 
 const styles: Record<string, React.CSSProperties> = {
     container: {
-        width: 320,
-        padding: 20,
+        width: 340,
+        padding: 24,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+        background: '#F9F7F2',
+        border: '1px solid #E2DCD2', // Visual border for popup context
     },
     header: {
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
-        marginBottom: 16,
+        gap: 12,
+        marginBottom: 20,
+        paddingBottom: 16,
+        borderBottom: '1px solid #E2DCD2',
     },
     logo: {
-        width: 36,
-        height: 36,
-        background: 'linear-gradient(135deg, #10b981, #059669)',
-        borderRadius: 10,
+        width: 32,
+        height: 32,
+        background: '#6C2E2E',
+        borderRadius: 4,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'white',
+        color: '#F9F7F2',
     },
     logoIcon: {
-        width: 20,
-        height: 20,
+        width: 18,
+        height: 18,
     },
     title: {
         margin: 0,
         fontSize: 20,
         fontWeight: 700,
-        color: '#1f2937',
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        color: '#2A2A2A',
+        letterSpacing: '-0.02em',
     },
     youtubeIndicator: {
         display: 'flex',
         alignItems: 'center',
         gap: 8,
         padding: '8px 12px',
-        background: '#fee2e2',
-        borderRadius: 8,
-        marginBottom: 12,
-        fontSize: 13,
+        background: '#6C2E2E',
+        borderRadius: 2,
+        marginBottom: 16,
+        fontSize: 12,
         fontWeight: 600,
-        color: '#dc2626',
+        color: '#F9F7F2',
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
     },
     youtubeIcon: {
-        fontSize: 16,
+        fontSize: 12,
     },
     videoTitle: {
-        margin: '0 0 12px',
-        fontSize: 14,
-        fontWeight: 600,
-        color: '#374151',
+        margin: '0 0 16px',
+        fontSize: 16,
+        fontWeight: 700,
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        color: '#2A2A2A',
         lineHeight: 1.4,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -288,54 +294,62 @@ const styles: Record<string, React.CSSProperties> = {
         WebkitBoxOrient: 'vertical' as const,
     },
     description: {
-        margin: '0 0 16px',
+        margin: '0 0 20px',
         fontSize: 14,
-        color: '#6b7280',
+        color: '#4B5563',
+        lineHeight: 1.5,
+        fontStyle: 'italic',
+        fontFamily: 'Georgia, serif',
     },
     button: {
         width: '100%',
-        padding: '14px 20px',
-        fontSize: 15,
-        fontWeight: 600,
-        color: 'white',
-        background: 'linear-gradient(135deg, #10b981, #059669)',
+        padding: '12px 20px',
+        fontSize: 13,
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        color: '#F9F7F2',
+        background: '#6C2E2E',
         border: 'none',
-        borderRadius: 10,
+        borderRadius: 2,
         cursor: 'pointer',
         transition: 'all 0.2s ease',
-        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
     },
     youtubeButton: {
-        background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+        background: '#6C2E2E',
     },
     buttonSuccess: {
-        background: 'linear-gradient(135deg, #10b981, #059669)',
-        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+        background: '#105940', // Deep green for success to match aesthetic
+        boxShadow: 'none',
     },
     buttonError: {
-        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+        background: '#9A3A3A',
+        boxShadow: 'none',
     },
     buttonLoading: {
-        opacity: 0.7,
+        opacity: 0.8,
         cursor: 'wait',
+        background: '#5A2525',
     },
     message: {
-        margin: '12px 0 0',
+        margin: '16px 0 0',
         fontSize: 13,
         textAlign: 'center' as const,
+        fontFamily: 'Georgia, serif',
+        fontStyle: 'italic',
     },
     footer: {
-        marginTop: 20,
+        marginTop: 24,
         paddingTop: 16,
-        borderTop: '1px solid #d1d5db',
+        borderTop: '1px solid #E2DCD2',
     },
     hint: {
         margin: 0,
-        fontSize: 12,
-        color: '#9ca3af',
+        fontSize: 11,
+        color: '#6B7280',
         textAlign: 'center' as const,
+        fontStyle: 'italic',
     },
 };
 

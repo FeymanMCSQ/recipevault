@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
     title: "RecipeVault",
     description: "Your personal recipe archive",
+    icons: {
+        icon: "/icon.png",
+        apple: "/apple-icon.png",
+    },
 };
 
 export default function RootLayout({
