@@ -7,6 +7,18 @@ datasource db {
 }
 
 
+model User {
+  id        String   @id // Clerk ID
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipes   Recipe[]
+}
+
 model Recipe {
   id           String   @id @default(uuid())
   title        String
@@ -15,6 +27,11 @@ model Recipe {
   sourceUrl    String
   sourceTitle  String   @default("")
   capturedText String
+  userId       String   @default("legacy_user")
+  user         User     @relation(fields: [userId], references: [id])
+
+
+  @@index([userId])
   
   // AI-processed structured fields
   ingredients  Json     @default("[]")  // Array of { component: string, items: string[] }

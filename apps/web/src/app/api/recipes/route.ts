@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/db/client";
 import { CreateRecipeInputSchema, ListRecipesQuerySchema } from "@recipevault/shared";
 import { processRecipeWithAI } from "@/lib/ai";
@@ -20,8 +19,8 @@ function errorResponse(
 
 export async function GET(request: NextRequest) {
     // 1. Auth check
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
         return errorResponse("AUTH_REQUIRED", "Authentication required", 401);
     }
 
@@ -105,10 +104,29 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     // 1. Auth check
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    // 1. Auth check & User Sync
+    const user = await currentUser();
+    if (!user) {
         return errorResponse("AUTH_REQUIRED", "Authentication required", 401);
     }
+
+    // Sync user to local DB (Lazy Sync)
+    await prisma.user.upsert({
+        where: { id: user.id },
+        update: {
+            email: user.emailAddresses[0]?.emailAddress ?? "",
+            firstName: user.firstName,
+            lastName: user.lastName,
+            imageUrl: user.imageUrl,
+        },
+        create: {
+            id: user.id,
+            email: user.emailAddresses[0]?.emailAddress ?? "",
+            firstName: user.firstName,
+            lastName: user.lastName,
+            imageUrl: user.imageUrl,
+        },
+    });
 
     // 2. Parse and validate input
     let body: unknown;
@@ -149,6 +167,7 @@ export async function POST(request: NextRequest) {
     try {
         const recipe = await prisma.recipe.create({
             data: {
+                userId: user.id,
                 title: input.title,
                 tags: allTags,
                 notes: input.notes,

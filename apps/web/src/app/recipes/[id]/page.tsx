@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
+import { currentUser } from "@clerk/nextjs/server";
+import { UserButton } from "@clerk/nextjs";
 import { redirect, notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import { authOptions } from "@/lib/auth";
 import type { Recipe } from "@recipevault/shared";
 import { RecipeDetail } from "@/components/RecipeDetail";
 
@@ -28,8 +28,8 @@ export default async function RecipeDetailPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
-    const session = await getServerSession(authOptions);
-    if (!session) redirect("/api/auth/signin");
+    const user = await currentUser();
+    if (!user) redirect("/sign-in");
 
     const { id } = await params;
     const recipe = await getRecipe(id);
@@ -46,10 +46,8 @@ export default async function RecipeDetailPage({
                         <h1 className="text-xl font-bold tracking-wide text-charcoal font-serif uppercase">RecipeVault</h1>
                     </div>
                     <div className="flex items-center gap-6 font-sans text-sm text-charcoal-muted tracking-wide">
-                        <span>{session.user?.email}</span>
-                        <a href="/api/auth/signout" className="hover:text-wine transition-colors underline decoration-transparent hover:decoration-wine underline-offset-4">
-                            Sign out
-                        </a>
+                        <span>{user.emailAddresses[0]?.emailAddress}</span>
+                        <UserButton afterSignOutUrl="/" />
                     </div>
                 </div>
             </header>

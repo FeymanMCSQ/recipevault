@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/db/client";
 import { UpdateRecipeInputSchema } from "@recipevault/shared";
 
@@ -21,8 +20,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
     // 1. Auth check
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
         return errorResponse("AUTH_REQUIRED", "Authentication required", 401);
     }
 
@@ -48,8 +47,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const input = parseResult.data;
 
-    // 3. Check if recipe exists
-    const existing = await prisma.recipe.findUnique({ where: { id } });
+    // 3. Check if recipe exists and belongs to user
+    const existing = await prisma.recipe.findFirst({ where: { id, userId } });
     if (!existing) {
         return errorResponse("NOT_FOUND", "Recipe not found", 404);
     }
@@ -84,15 +83,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
     // 1. Auth check
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
         return errorResponse("AUTH_REQUIRED", "Authentication required", 401);
     }
 
     const { id } = await context.params;
 
-    // 2. Check if recipe exists
-    const existing = await prisma.recipe.findUnique({ where: { id } });
+    // 2. Check if recipe exists and belongs to user
+    const existing = await prisma.recipe.findFirst({ where: { id, userId } });
     if (!existing) {
         return errorResponse("NOT_FOUND", "Recipe not found", 404);
     }
@@ -110,15 +109,15 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 // Bonus: GET single recipe
 export async function GET(request: NextRequest, context: RouteContext) {
     // 1. Auth check
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
         return errorResponse("AUTH_REQUIRED", "Authentication required", 401);
     }
 
     const { id } = await context.params;
 
-    // 2. Fetch recipe
-    const recipe = await prisma.recipe.findUnique({ where: { id } });
+    // 2. Fetch recipe (enforce ownership)
+    const recipe = await prisma.recipe.findFirst({ where: { id, userId } });
     if (!recipe) {
         return errorResponse("NOT_FOUND", "Recipe not found", 404);
     }
