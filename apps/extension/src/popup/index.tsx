@@ -49,7 +49,16 @@ function Popup() {
             if (!tab?.id || !tab.url) throw new Error('No active tab');
 
             // Ask content script to extract YouTube subtitles
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_YOUTUBE' });
+            let response;
+            try {
+                response = await chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_YOUTUBE' });
+            } catch (error: unknown) {
+                const err = error as Error;
+                if (err.message && err.message.includes('Receiving end does not exist')) {
+                    throw new Error('Please refresh this YouTube page and try again');
+                }
+                throw error;
+            }
 
             if (!response?.success) {
                 throw new Error(response?.error || 'Failed to extract subtitles');
