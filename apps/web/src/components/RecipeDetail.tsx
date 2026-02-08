@@ -65,24 +65,61 @@ export function RecipeDetail({ recipe: initialRecipe }: RecipeDetailProps) {
 
     return (
         <div className="max-w-3xl mx-auto">
-            {/* Back Button */}
+            {/* Back Navigation */}
             <button
                 onClick={() => router.push("/recipes")}
-                className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+                className="group flex items-center gap-2 text-charcoal-muted hover:text-charcoal mb-8 font-sans text-sm tracking-wide transition-colors"
             >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to recipes
+                <span className="text-lg transition-transform group-hover:-translate-x-1">←</span>
+                BACK TO INDEX
             </button>
 
-            {/* Main Card */}
-            <article className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                {/* Header */}
-                <div className="p-6 border-b border-gray-100">
-                    <div className="flex items-start justify-between gap-4">
-                        <h1 className="text-2xl font-bold text-gray-900">{recipe.title}</h1>
-                        <div className="flex gap-2">
+            {/* Main Card - Paper aesthetic */}
+            <article className="bg-ivory relative pt-8 pb-16 px-12 shadow-card transition-shadow hover:shadow-card-hover border-t-4 border-wine">
+                {/* Paper texture overlay (optional, simulating with opacity) */}
+                <div className="absolute inset-0 bg-[#fffdf5] opacity-50 pointer-events-none mix-blend-multiply"></div>
+
+                <div className="relative z-10">
+                    {/* Header Section */}
+                    <div className="text-center mb-10">
+                        <div className="mb-6 flex justify-center gap-4 font-sans text-xs tracking-widest text-charcoal-muted uppercase">
+                            <span className="flex items-center gap-1">
+                                <span>FROM THE KITCHEN OF</span>
+                                <a
+                                    href={recipe.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-bold border-b border-charcoal-muted hover:text-wine hover:border-wine transition-colors"
+                                >
+                                    {hostname.toUpperCase()}
+                                </a>
+                            </span>
+                            <span>—</span>
+                            <time>{formattedDate.toLocaleUpperCase()}</time>
+                        </div>
+
+                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-6 leading-tight">
+                            {recipe.title}
+                        </h1>
+
+                        <div className="w-16 h-px bg-wine mx-auto mb-6 opacity-30"></div>
+
+                        {/* Tags */}
+                        {recipe.tags.length > 0 && (
+                            <div className="flex flex-wrap justify-center gap-x-3 gap-y-2 text-sm font-sans text-charcoal-muted">
+                                {recipe.tags.map((tag, i) => (
+                                    <span key={tag}>
+                                        {tag.toLowerCase()}
+                                        {i < recipe.tags.length - 1 && <span className="mx-1.5 opacity-40">·</span>}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Actions (Edit/Delete) - Minimal */}
+                    <div className="absolute top-0 right-0 p-4 opacity-0 hover:opacity-100 transition-opacity">
+                        <div className="flex gap-2 font-sans text-xs">
                             <button
                                 onClick={() => {
                                     setEditTitle(recipe.title);
@@ -90,209 +127,196 @@ export function RecipeDetail({ recipe: initialRecipe }: RecipeDetailProps) {
                                     setEditNotes(recipe.notes);
                                     setIsEditing(true);
                                 }}
-                                className="px-3 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                className="px-2 py-1 hover:text-wine underline underline-offset-2"
                             >
-                                Edit
+                                EDIT
                             </button>
                             <button
                                 onClick={() => setIsDeleting(true)}
-                                className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                className="px-2 py-1 hover:text-red-700 underline underline-offset-2"
                             >
-                                Delete
+                                DELETE
                             </button>
                         </div>
                     </div>
 
-                    {/* Meta */}
-                    <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-500">
-                        <a
-                            href={recipe.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            {hostname}
-                        </a>
-                        <span>•</span>
-                        <time>{formattedDate}</time>
-                    </div>
+                    {/* Grid Layout for Content */}
+                    <div className="grid md:grid-cols-[1fr,60px,1.5fr] gap-8 mt-12">
 
-                    {/* Tags */}
-                    {recipe.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-4">
-                            {recipe.tags.map(tag => (
-                                <span key={tag} className="px-3 py-1 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full">
-                                    {tag}
-                                </span>
-                            ))}
+                        {/* Left Column: Ingredients */}
+                        <div className="md:col-span-1">
+                            {hasIngredients && (
+                                <div>
+                                    <h2 className="font-sans text-xs font-bold tracking-widest text-charcoal uppercase mb-6 border-b border-parchment pb-2">
+                                        Ingredients
+                                    </h2>
+                                    <div className="space-y-6">
+                                        {(recipe.ingredients as { component: string; items: string[] }[]).map((group, groupIdx) => (
+                                            <div key={groupIdx}>
+                                                {recipe.ingredients.length > 1 && (
+                                                    <h3 className="font-serif italic text-charcoal-muted mb-2 text-lg">
+                                                        {group.component}
+                                                    </h3>
+                                                )}
+                                                <ul className="space-y-3 font-serif text-charcoal leading-relaxed">
+                                                    {group.items.map((ingredient: string, idx: number) => (
+                                                        <li key={idx} className="flex items-baseline gap-2 group">
+                                                            <span className="w-1 h-1 rounded-full bg-parchment border border-charcoal-muted mt-2.5 flex-shrink-0 group-hover:bg-wine group-hover:border-wine transition-colors"></span>
+                                                            <span>{ingredient}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Notes in left column if space permits, or separate */}
+                            {recipe.notes && (
+                                <div className="mt-12 bg-parchment/30 p-6 italic font-serif text-charcoal-muted text-sm leading-relaxed border-l-2 border-parchment">
+                                    <h3 className="font-sans text-xs font-bold uppercase not-italic mb-2 opacity-70">Cook's Notes</h3>
+                                    <p className="whitespace-pre-wrap">{recipe.notes}</p>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
 
-                {/* Notes */}
-                {recipe.notes && (
-                    <div className="p-6 border-b border-gray-100 bg-amber-50/50">
-                        <h2 className="text-sm font-semibold text-amber-800 mb-2">📝 Notes</h2>
-                        <p className="text-gray-700 whitespace-pre-wrap">{recipe.notes}</p>
-                    </div>
-                )}
+                        {/* Divider Line */}
+                        <div className="hidden md:flex justify-center">
+                            <div className="w-px h-full bg-parchment"></div>
+                        </div>
 
-                {/* Ingredients Section */}
-                {hasIngredients && (
-                    <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <span className="text-xl">🥗</span> Ingredients
-                        </h2>
-                        <div className="space-y-6">
-                            {(recipe.ingredients as { component: string; items: string[] }[]).map((group, groupIdx) => (
-                                <div key={groupIdx}>
-                                    {recipe.ingredients.length > 1 && (
-                                        <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
-                                            {group.component}
-                                        </h3>
-                                    )}
-                                    <ul className="space-y-2">
-                                        {group.items.map((ingredient: string, idx: number) => (
-                                            <li key={idx} className="flex items-start gap-3">
-                                                <span className="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></span>
-                                                <span className="text-gray-700">{ingredient}</span>
+                        {/* Right Column: Instructions */}
+                        <div className="md:col-span-1">
+                            {hasInstructions && (
+                                <div>
+                                    <h2 className="font-sans text-xs font-bold tracking-widest text-charcoal uppercase mb-6 border-b border-parchment pb-2">
+                                        Preparation
+                                    </h2>
+                                    <ol className="space-y-8">
+                                        {recipe.instructions.map((step, idx) => (
+                                            <li key={idx} className="relative pl-8">
+                                                <span className="absolute left-0 top-0 font-sans text-xs font-bold text-wine opacity-60">
+                                                    {String(idx + 1).padStart(2, '0')}
+                                                </span>
+                                                <p className="font-serif text-charcoal text-lg leading-relaxed">
+                                                    {step}
+                                                </p>
                                             </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                            )}
+
+                            {/* AI Suggestions (as subtle footnotes) */}
+                            {hasSuggestions && (
+                                <div className="mt-16 pt-8 border-t border-dotted border-charcoal-muted/30">
+                                    <h3 className="font-serif italic text-wine mb-4 text-center">Variations & Ideas</h3>
+                                    <ul className="space-y-2 text-sm font-serif text-charcoal-muted text-center leading-relaxed max-w-sm mx-auto">
+                                        {recipe.suggestions.map((suggestion, idx) => (
+                                            <li key={idx}>“{suggestion}”</li>
                                         ))}
                                     </ul>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
-                )}
+                </div>
 
-                {/* Instructions Section */}
-                {hasInstructions && (
-                    <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <span className="text-xl">👨‍🍳</span> Instructions
-                        </h2>
-                        <ol className="space-y-4">
-                            {recipe.instructions.map((step, idx) => (
-                                <li key={idx} className="flex gap-4">
-                                    <span className="flex-shrink-0 w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-semibold text-sm">
-                                        {idx + 1}
-                                    </span>
-                                    <p className="text-gray-700 pt-1">{step}</p>
-                                </li>
-                            ))}
-                        </ol>
-                    </div>
-                )}
+                {/* Footer / Copyright fake */}
+                <div className="mt-16 pt-8 border-t border-parchment flex justify-between items-center text-[10px] font-sans tracking-widest text-charcoal-muted opacity-50 uppercase">
+                    <span>RecipeVault Archive</span>
+                    <span>No. {recipe.id.slice(0, 8)}</span>
+                </div>
+            </article>
 
-                {/* Suggestions Section */}
-                {hasSuggestions && (
-                    <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-purple-50 to-indigo-50">
-                        <h2 className="text-lg font-semibold text-purple-900 mb-4 flex items-center gap-2">
-                            <span className="text-xl">✨</span> AI Suggestions
-                        </h2>
-                        <ul className="space-y-3">
-                            {recipe.suggestions.map((suggestion, idx) => (
-                                <li key={idx} className="flex items-start gap-3 p-3 bg-white/60 rounded-lg">
-                                    <span className="text-purple-500">💡</span>
-                                    <span className="text-gray-700">{suggestion}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {/* Original Captured Text (collapsible fallback) */}
-                <details className="p-6 group">
-                    <summary className="text-sm font-semibold text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-2">
-                        <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                        Original Captured Text
+            {/* Original Text Toggle */}
+            <div className="mt-8 text-center">
+                <details className="inline-block text-left group">
+                    <summary className="font-sans text-xs tracking-widest text-charcoal-muted hover:text-wine cursor-pointer uppercase select-none list-none">
+                        View Source Text <span className="ml-1 opacity-50 group-open:rotate-180 transition-transform inline-block">↓</span>
                     </summary>
-                    <div className="mt-4 prose prose-sm max-w-none text-gray-600 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
+                    <div className="mt-4 p-6 bg-white border border-parchment font-mono text-xs text-charcoal-muted whitespace-pre-wrap max-w-2xl mx-auto shadow-inner text-left">
                         {recipe.capturedText}
                     </div>
                 </details>
-            </article>
+            </div>
 
-            {/* Edit Modal */}
+            {/* Edit Modal - Styling Updates */}
             {isEditing && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
-                        <div className="p-6 border-b border-gray-100">
-                            <h2 className="text-lg font-semibold text-gray-900">Edit Recipe</h2>
+                <div className="fixed inset-0 bg-charcoal/20 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                    <div className="bg-ivory w-full max-w-lg shadow-2xl border border-parchment">
+                        <div className="p-6 border-b border-parchment bg-white/50">
+                            <h2 className="font-serif text-xl text-charcoal">Edit Record</h2>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-8 space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                <label className="block font-sans text-xs font-bold tracking-widest text-charcoal-muted mb-2 uppercase">Title</label>
                                 <input
                                     type="text"
                                     value={editTitle}
                                     onChange={e => setEditTitle(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full bg-transparent border-b border-charcoal-muted focus:border-wine px-0 py-2 font-serif text-lg focus:outline-none transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                                <label className="block font-sans text-xs font-bold tracking-widest text-charcoal-muted mb-2 uppercase">Tags</label>
                                 <input
                                     type="text"
                                     value={editTags}
                                     onChange={e => setEditTags(e.target.value)}
-                                    placeholder="soup, dinner, easy"
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full bg-transparent border-b border-charcoal-muted focus:border-wine px-0 py-2 font-sans focus:outline-none transition-colors"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">Comma-separated</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                <label className="block font-sans text-xs font-bold tracking-widest text-charcoal-muted mb-2 uppercase">Notes</label>
                                 <textarea
                                     value={editNotes}
                                     onChange={e => setEditNotes(e.target.value)}
-                                    rows={3}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                                    rows={4}
+                                    className="w-full bg-parchment/30 border border-transparent focus:border-parchment p-3 font-serif focus:outline-none resize-none"
                                 />
                             </div>
                         </div>
-                        <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+                        <div className="p-6 bg-white/50 border-t border-parchment flex justify-end gap-4">
                             <button
                                 onClick={() => setIsEditing(false)}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="px-4 py-2 font-sans text-xs font-bold tracking-widest text-charcoal-muted hover:text-charcoal uppercase"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSave}
                                 disabled={isSaving || !editTitle.trim()}
-                                className="px-4 py-2 text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors disabled:opacity-50"
+                                className="px-6 py-2 bg-charcoal text-ivory font-sans text-xs font-bold tracking-widest uppercase hover:bg-wine transition-colors disabled:opacity-50"
                             >
-                                {isSaving ? "Saving..." : "Save"}
+                                {isSaving ? "Saving..." : "Save Changes"}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Delete Confirmation */}
+            {/* Delete Modal */}
             {isDeleting && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-2">Delete Recipe?</h2>
-                        <p className="text-gray-600 mb-6">This action cannot be undone.</p>
-                        <div className="flex justify-end gap-3">
+                <div className="fixed inset-0 bg-charcoal/20 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                    <div className="bg-ivory w-full max-w-sm shadow-2xl border border-parchment p-8 text-center">
+                        <h2 className="font-serif text-xl text-wine mb-4">Confirm Deletion</h2>
+                        <p className="font-serif text-charcoal-muted mb-8">
+                            Are you sure you want to remove "<span className="italic">{recipe.title}</span>" from the archive? This cannot be undone.
+                        </p>
+                        <div className="flex justify-center gap-4">
                             <button
                                 onClick={() => setIsDeleting(false)}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="px-4 py-2 font-sans text-xs font-bold tracking-widest text-charcoal-muted hover:text-charcoal uppercase border border-parchment"
                             >
-                                Cancel
+                                Keep
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                                className="px-4 py-2 bg-wine text-ivory font-sans text-xs font-bold tracking-widest uppercase hover:bg-red-800 transition-colors"
                             >
-                                Delete
+                                Delete Forever
                             </button>
                         </div>
                     </div>
