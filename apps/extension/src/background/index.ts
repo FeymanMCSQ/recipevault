@@ -79,6 +79,7 @@ async function removeFromQueue(id: string): Promise<void> {
 // ============================================
 
 async function saveRecipe(payload: RecipePayload): Promise<SaveRecipeResponse> {
+    console.log(`[RecipeVault] Background: saveRecipe to ${API_BASE_URL}/api/recipes`, payload);
     try {
         const response = await fetch(`${API_BASE_URL}/api/recipes`, {
             method: "POST",

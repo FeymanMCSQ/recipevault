@@ -41,6 +41,7 @@ function Popup() {
     }
 
     async function handleSaveYouTube() {
+        console.log("[RecipeVault] Popup: handleSaveYouTube triggered");
         setStatus('extracting');
         setMessage('Extracting subtitles...');
 
@@ -49,9 +50,11 @@ function Popup() {
             if (!tab?.id || !tab.url) throw new Error('No active tab');
 
             // Ask content script to extract YouTube subtitles
+            console.log(`[RecipeVault] Popup: Sending EXTRACT_YOUTUBE to tab ${tab.id}`);
             let response;
             try {
                 response = await chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_YOUTUBE' });
+                console.log("[RecipeVault] Popup: Received response from content script:", response);
             } catch (error: unknown) {
                 const err = error as Error;
                 if (err.message && err.message.includes('Receiving end does not exist')) {
@@ -96,6 +99,7 @@ function Popup() {
     }
 
     async function handleSavePage() {
+        console.log("[RecipeVault] Popup: handleSavePage triggered");
         setStatus('extracting');
         setMessage('Extracting page content...');
 
@@ -103,7 +107,9 @@ function Popup() {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             if (!tab?.id || !tab.url) throw new Error('No active tab');
 
+            console.log(`[RecipeVault] Popup: Sending EXTRACT_PAGE to tab ${tab.id}`);
             const response = await chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_PAGE' });
+            console.log("[RecipeVault] Popup: Received response from content script:", response);
 
             if (!response?.success) {
                 throw new Error(response?.error || 'Extraction failed');

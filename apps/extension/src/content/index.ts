@@ -181,6 +181,7 @@ document.addEventListener("mousedown", (e) => {
 
 // Listen for messages from popup and background
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    console.log("[RecipeVault] Content script received message:", message);
     // Handle page extraction request from popup
     if (message.action === "EXTRACT_PAGE") {
         try {
