@@ -5,11 +5,12 @@ import {
     ScrollView,
     ActivityIndicator,
     TouchableOpacity,
-    SafeAreaView
+    SafeAreaView,
+    Alert
 } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
-import { getRecipe, Recipe } from '../lib/api';
-import { ArrowLeft, Clock, Globe, Hash } from 'lucide-react-native';
+import { getRecipe, Recipe, deleteRecipe } from '../lib/api';
+import { ArrowLeft, Clock, Globe, Hash, Trash2 } from 'lucide-react-native';
 
 interface RecipeDetailProps {
     recipeId: string;
@@ -20,6 +21,7 @@ export default function RecipeDetail({ recipeId, onBack }: RecipeDetailProps) {
     const { getToken } = useAuth();
     const [recipe, setRecipe] = useState<Recipe | null>(null);
     const [loading, setLoading] = useState(true);
+    const [deleting, setDeleting] = useState(false);
 
     const fetchDetail = useCallback(async () => {
         try {
@@ -41,6 +43,35 @@ export default function RecipeDetail({ recipeId, onBack }: RecipeDetailProps) {
     useEffect(() => {
         fetchDetail();
     }, [fetchDetail]);
+
+    const handleDelete = async () => {
+        setDeleting(true);
+        try {
+            const token = await getToken();
+            const response = await deleteRecipe(token, recipeId);
+            if (response.ok) {
+                onBack(); // Successfully deleted, go back
+            } else {
+                Alert.alert('Archive Error', 'Failed to purge record from the archive.');
+                setDeleting(false);
+            }
+        } catch (error) {
+            console.error('Error deleting recipe:', error);
+            Alert.alert('System Error', 'Could not connect to the archive.');
+            setDeleting(false);
+        }
+    };
+
+    const confirmDelete = () => {
+        Alert.alert(
+            'Purge Record?',
+            'This recipe will be permanently removed from the Culinary Archive. This action cannot be undone.',
+            [
+                { text: 'Keep Record', style: 'cancel' },
+                { text: 'Purge', onPress: handleDelete, style: 'destructive' }
+            ]
+        );
+    };
 
     if (loading) {
         return (
@@ -70,6 +101,17 @@ export default function RecipeDetail({ recipeId, onBack }: RecipeDetailProps) {
                         {recipe.title}
                     </Text>
                 </View>
+                <TouchableOpacity
+                    onPress={confirmDelete}
+                    disabled={deleting}
+                    className="p-2"
+                >
+                    {deleting ? (
+                        <ActivityIndicator size="small" color="#6C2E2E" />
+                    ) : (
+                        <Trash2 size={20} color="#6C2E2E" opacity={0.6} />
+                    )}
+                </TouchableOpacity>
             </View>
 
             <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 60 }}>
@@ -137,6 +179,22 @@ export default function RecipeDetail({ recipeId, onBack }: RecipeDetailProps) {
                         </View>
                     ))}
                 </View>
+
+                {/* Variations & Suggestions */}
+                {recipe.suggestions && recipe.suggestions.length > 0 && (
+                    <View className="mb-10">
+                        <Text className="text-sm font-serif font-bold text-wine mb-4 border-b border-wine/20 pb-2">
+                            Variations & Creative Ideas
+                        </Text>
+                        {recipe.suggestions.map((suggestion, idx) => (
+                            <View key={idx} className="flex-row mb-3 bg-parchment/5 p-3 border-l-2 border-wine/20">
+                                <Text className="flex-1 text-xs font-sans text-charcoal italic leading-5">
+                                    {suggestion}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
 
                 {/* Archivist Notes */}
                 {recipe.notes && (

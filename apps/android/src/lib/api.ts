@@ -33,6 +33,7 @@ export interface Recipe {
     sourceTitle?: string;
     ingredients: RecipeIngredientGroup[];
     instructions: string[];
+    suggestions: string[];
     createdAt: string;
     updatedAt: string;
 }
@@ -69,4 +70,10 @@ export async function createRecipe(token: string | null, input: CreateRecipeInpu
 
 export async function getRecipe(token: string | null, id: string) {
     return fetchWithAuth(`/api/recipes/${id}`, token);
+}
+
+export async function deleteRecipe(token: string | null, id: string) {
+    return fetchWithAuth(`/api/recipes/${id}`, token, {
+        method: 'DELETE',
+    });
 }
