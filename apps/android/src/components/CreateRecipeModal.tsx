@@ -27,6 +27,7 @@ export default function CreateRecipeModal({ visible, onClose, onSuccess }: Creat
     const [sourceUrl, setSourceUrl] = useState('');
     const [notes, setNotes] = useState('');
     const [tags, setTags] = useState('');
+    const [capturedText, setCapturedText] = useState('');
 
     const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +63,7 @@ export default function CreateRecipeModal({ visible, onClose, onSuccess }: Creat
                 title,
                 sourceUrl: formattedUrl,
                 notes,
-                capturedText: title,
+                capturedText: capturedText.trim() || title,
                 tags: tags.split(',').map(t => t.trim()).filter(Boolean),
                 sourceTitle: sourceUrl.trim() ? undefined : 'MANUAL ENTRY',
             };
@@ -73,6 +74,7 @@ export default function CreateRecipeModal({ visible, onClose, onSuccess }: Creat
                 setSourceUrl('');
                 setNotes('');
                 setTags('');
+                setCapturedText('');
                 onSuccess();
                 onClose();
             } else {
@@ -126,6 +128,28 @@ export default function CreateRecipeModal({ visible, onClose, onSuccess }: Creat
                                 </Text>
                             </View>
                         )}
+
+                        <View className="mb-6">
+                            <Text className="text-[10px] font-sans font-bold tracking-[1px] text-charcoal-muted uppercase mb-2">
+                                MAIN TEXT / RECIPE CONTENT
+                            </Text>
+                            <View className="bg-wine/5 border border-dashed border-wine/30 p-4 rounded-lg">
+                                <TextInput
+                                    value={capturedText}
+                                    onChangeText={setCapturedText}
+                                    multiline
+                                    numberOfLines={6}
+                                    placeholder="Paste ingredients, instructions, or full article text here..."
+                                    placeholderTextColor="#A1A1A1"
+                                    className="font-sans text-sm text-charcoal min-h-[120px]"
+                                    textAlignVertical="top"
+                                />
+                                <Text className="text-[9px] font-sans text-charcoal-muted italic mt-2">
+                                    AI will extract ingredients and method from this text.
+                                </Text>
+                            </View>
+                        </View>
+
                         <View className="mb-6">
                             <Text className="text-[10px] font-sans font-bold tracking-[1px] text-charcoal-muted uppercase mb-2">
                                 TITLE *
