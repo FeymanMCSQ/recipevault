@@ -47,7 +47,7 @@ export async function processRecipeWithAI(capturedText: string): Promise<AIProce
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${apiKey}`,
-                "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+                "HTTP-Referer": process.env.BASE_URL || "http://localhost:3000",
                 "X-Title": "RecipeVault",
             },
             body: JSON.stringify({

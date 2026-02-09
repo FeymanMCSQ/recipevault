@@ -12,7 +12,7 @@ async function getRecipe(id: string): Promise<Recipe | null> {
         .join("; ");
 
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/recipes/${id}`,
+        `${process.env.BASE_URL}/api/recipes/${id}`,
         {
             cache: "no-store",
             headers: { Cookie: cookieHeader },
