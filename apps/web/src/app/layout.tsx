@@ -8,6 +8,9 @@ export const metadata: Metadata = {
         icon: "/icon.png",
         apple: "/apple-icon.png",
     },
+    verification: {
+        google: "wtMnU2tDwE90EmWBhZynficgUNbIx1s90nhL7YnA5Ks",
+    },
 };
 
 import { ClerkProvider } from "@clerk/nextjs";
