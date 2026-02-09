@@ -1,52 +1,59 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { ClerkProvider, ClerkLoaded, SignedIn, SignedOut } from '@clerk/clerk-expo';
 import { tokenCache } from './src/lib/cache';
-
-console.log('--- MOBILE DEBUG START ---');
-console.log('React version:', React.version);
-// @ts-ignore
-console.log('Dispatcher Check:', !!(React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED?.ReactCurrentDispatcher));
-console.log('--- MOBILE DEBUG END ---');
+import SignInScreen from './src/components/SignInScreen';
+import SignUpScreen from './src/components/SignUpScreen';
+import RecipeDashboard from './src/components/RecipeDashboard';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
-
 if (!publishableKey) {
   throw new Error(
     'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env',
   );
 }
-
 export default function App() {
+  const [authMode, setAuthMode] = React.useState<'signin' | 'signup'>('signin');
+
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
-        <View className="flex-1 bg-ivory items-center justify-center p-6">
-          <SignedIn>
-            <Text className="text-charcoal font-serif text-2xl mb-4">
-              Welcome to RecipeVault
-            </Text>
-            <Text className="text-charcoal-muted font-sans text-center italic">
-              The Archive is at your fingertips.
-            </Text>
-          </SignedIn>
-          <SignedOut>
-            <Text className="text-charcoal font-serif text-2xl mb-4">
-              RecipeVault
-            </Text>
-            <Text className="text-charcoal-muted font-sans text-center mb-8">
-              Sign in to access your culinary archive.
-            </Text>
-            {/* TODO: Add Sign In Component */}
-            <View className="bg-wine px-8 py-3 rounded-sm">
-              <Text className="text-ivory font-bold tracking-widest uppercase text-xs">
-                Enter the Archive
-              </Text>
+        <SignedIn>
+          <RecipeDashboard />
+        </SignedIn>
+
+        <SignedOut>
+          <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-ivory">
+            <View className="flex-1 items-center justify-center p-8">
+              <View className="items-center w-full">
+                <Text className="text-wine font-serif text-4xl mb-2 tracking-tighter">
+                  RecipeVault
+                </Text>
+                <Text className="text-[10px] font-sans font-bold tracking-[4px] text-charcoal-muted uppercase mb-8">
+                  DIGITAL CULINARY ARCHIVE
+                </Text>
+
+                {authMode === 'signin' ? (
+                  <SignInScreen />
+                ) : (
+                  <SignUpScreen />
+                )}
+
+                <TouchableOpacity
+                  onPress={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
+                  className="mt-8 border-b border-charcoal-muted"
+                >
+                  <Text className="text-charcoal-muted font-sans text-[10px] uppercase font-bold tracking-[1px]">
+                    {authMode === 'signin' ? 'Switch to Registration' : 'Return to Access Gate'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </SignedOut>
-          <StatusBar style="auto" />
-        </View>
+          </ScrollView>
+        </SignedOut>
+
+        <StatusBar style="dark" />
       </ClerkLoaded>
     </ClerkProvider>
   );

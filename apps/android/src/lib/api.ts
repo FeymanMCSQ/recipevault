@@ -1,19 +1,19 @@
 import { tokenCache } from './cache';
 
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
+export const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
 
-export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-    // 1. Get the session token from cache/Clerk (not directly available here, 
-    // but we can use the getToken we defined in the cache utility or pass it from a hook)
-    // Actually, in Expo, the best way is to use the useAuth() hook's getToken().
-    // This helper will be used inside our components.
-
+export async function fetchWithAuth(
+    endpoint: string,
+    token: string | null,
+    options: RequestInit = {}
+) {
     const url = `${BASE_URL}${endpoint}`;
 
     return fetch(url, {
         ...options,
         headers: {
             'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
             ...options.headers,
         },
     });
@@ -31,4 +31,20 @@ export interface RecipeSummary {
 export interface ListRecipesResponse {
     items: RecipeSummary[];
     nextCursor?: string;
+}
+export interface CreateRecipeInput {
+    title: string;
+    sourceUrl: string;
+    capturedText: string;
+    tags?: string[];
+    notes?: string;
+    sourceTitle?: string;
+    transcript?: string;
+}
+
+export async function createRecipe(token: string | null, input: CreateRecipeInput) {
+    return fetchWithAuth('/api/recipes', token, {
+        method: 'POST',
+        body: JSON.stringify(input),
+    });
 }

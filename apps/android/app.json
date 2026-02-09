@@ -2,6 +2,7 @@
   "expo": {
     "name": "android",
     "slug": "android",
+    "scheme": "recipevault",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
