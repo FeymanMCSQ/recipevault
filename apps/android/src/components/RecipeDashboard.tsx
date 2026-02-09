@@ -13,7 +13,11 @@ import { RecipeCard } from './RecipeCard';
 import { LogOut, Plus } from 'lucide-react-native';
 import CreateRecipeModal from './CreateRecipeModal';
 
-export default function RecipeDashboard() {
+interface RecipeDashboardProps {
+    onSelectRecipe: (id: string) => void;
+}
+
+export default function RecipeDashboard({ onSelectRecipe }: RecipeDashboardProps) {
     const { getToken, signOut } = useAuth();
     const { user } = useUser();
     const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
@@ -83,7 +87,7 @@ export default function RecipeDashboard() {
                 renderItem={({ item }) => (
                     <RecipeCard
                         recipe={item}
-                        onPress={(id) => console.log('View recipe:', id)}
+                        onPress={onSelectRecipe}
                     />
                 )}
                 contentContainerStyle={{ padding: 24, paddingBottom: 100 }}

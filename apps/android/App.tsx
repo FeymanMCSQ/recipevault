@@ -6,6 +6,7 @@ import { tokenCache } from './src/lib/cache';
 import SignInScreen from './src/components/SignInScreen';
 import SignUpScreen from './src/components/SignUpScreen';
 import RecipeDashboard from './src/components/RecipeDashboard';
+import RecipeDetail from './src/components/RecipeDetail';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 if (!publishableKey) {
@@ -15,12 +16,20 @@ if (!publishableKey) {
 }
 export default function App() {
   const [authMode, setAuthMode] = React.useState<'signin' | 'signup'>('signin');
+  const [selectedRecipeId, setSelectedRecipeId] = React.useState<string | null>(null);
 
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
         <SignedIn>
-          <RecipeDashboard />
+          {selectedRecipeId ? (
+            <RecipeDetail
+              recipeId={selectedRecipeId}
+              onBack={() => setSelectedRecipeId(null)}
+            />
+          ) : (
+            <RecipeDashboard onSelectRecipe={setSelectedRecipeId} />
+          )}
         </SignedIn>
 
         <SignedOut>

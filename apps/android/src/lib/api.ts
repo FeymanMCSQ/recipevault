@@ -19,6 +19,24 @@ export async function fetchWithAuth(
     });
 }
 
+export interface RecipeIngredientGroup {
+    component: string;
+    items: string[];
+}
+
+export interface Recipe {
+    id: string;
+    title: string;
+    tags: string[];
+    notes?: string;
+    sourceUrl: string;
+    sourceTitle?: string;
+    ingredients: RecipeIngredientGroup[];
+    instructions: string[];
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface RecipeSummary {
     id: string;
     title: string;
@@ -47,4 +65,8 @@ export async function createRecipe(token: string | null, input: CreateRecipeInpu
         method: 'POST',
         body: JSON.stringify(input),
     });
+}
+
+export async function getRecipe(token: string | null, id: string) {
+    return fetchWithAuth(`/api/recipes/${id}`, token);
 }
