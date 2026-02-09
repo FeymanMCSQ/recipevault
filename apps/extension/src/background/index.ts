@@ -5,7 +5,7 @@
 
 console.log("[RecipeVault] Background script running");
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "https://recipevault-web.vercel.app";
 const RETRY_INTERVAL_MS = 30000; // 30 seconds
 const MAX_RETRIES = 5;
 

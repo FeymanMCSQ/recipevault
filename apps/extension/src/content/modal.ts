@@ -14,7 +14,7 @@ import { showToast } from "./toast";
 import { saveRecipeToAPI } from "./api";
 import { extractYouTubeSubtitles, isYouTubePage } from "./youtube";
 
-const LOGIN_URL = "http://localhost:3000";
+const LOGIN_URL = "https://recipevault-web.vercel.app";
 
 export function openModal(): void {
     if (!modal || !currentSelectionData) return;
