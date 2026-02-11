@@ -11,6 +11,7 @@
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.22",
     "expo": "~54.0.33",
+    "expo-keep-awake": "^15.0.8",
     "expo-linking": "~8.0.11",
     "expo-modules-core": "~3.0.29",
     "expo-secure-store": "~15.0.8",

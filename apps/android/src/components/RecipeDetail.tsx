@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { getRecipe, Recipe, deleteRecipe } from '../lib/api';
-import { ArrowLeft, Clock, Globe, Hash, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Clock, Globe, Hash, Trash2, ChefHat } from 'lucide-react-native';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
 interface RecipeDetailProps {
     recipeId: string;
@@ -22,6 +23,7 @@ export default function RecipeDetail({ recipeId, onBack }: RecipeDetailProps) {
     const [recipe, setRecipe] = useState<Recipe | null>(null);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(false);
+    const [cookMode, setCookMode] = useState(false);
 
     const fetchDetail = useCallback(async () => {
         try {
@@ -43,6 +45,17 @@ export default function RecipeDetail({ recipeId, onBack }: RecipeDetailProps) {
     useEffect(() => {
         fetchDetail();
     }, [fetchDetail]);
+
+    useEffect(() => {
+        if (cookMode) {
+            activateKeepAwakeAsync();
+        } else {
+            deactivateKeepAwake();
+        }
+        return () => {
+            deactivateKeepAwake();
+        };
+    }, [cookMode]);
 
     const handleDelete = async () => {
         setDeleting(true);
@@ -101,6 +114,12 @@ export default function RecipeDetail({ recipeId, onBack }: RecipeDetailProps) {
                         {recipe.title}
                     </Text>
                 </View>
+                <TouchableOpacity
+                    onPress={() => setCookMode(!cookMode)}
+                    className={`mr-2 p-2 rounded-full ${cookMode ? 'bg-wine/10' : ''}`}
+                >
+                    <ChefHat size={20} color={cookMode ? "#6C2E2E" : "#6C2E2E"} opacity={cookMode ? 1 : 0.4} />
+                </TouchableOpacity>
                 <TouchableOpacity
                     onPress={confirmDelete}
                     disabled={deleting}
