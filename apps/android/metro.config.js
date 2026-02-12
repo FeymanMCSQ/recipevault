@@ -27,11 +27,14 @@ config.resolver.blockList = [
 config.resolver.extraNodeModules = {
     'react': path.resolve(projectRoot, 'node_modules/react'),
     'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
+    'react-native-css-interop': path.resolve(projectRoot, 'node_modules/react-native-css-interop'),
+    'react-native-reanimated': path.resolve(projectRoot, 'node_modules/react-native-reanimated'),
+    'react-native-worklets-core': path.resolve(projectRoot, 'node_modules/react-native-worklets-core'),
     '@recipevault/shared': path.resolve(workspaceRoot, 'packages/shared/src'),
 };
 
-// 5. Force Metro to resolve (sub)dependencies only from the `node_modules` directories
-config.resolver.disableHierarchicalLookup = true;
+// 5. Allow hierarchical lookup (Important for pnpm symlinks)
+config.resolver.disableHierarchicalLookup = false;
 
 // 6. Trace resolutions to find leaks
 config.resolver.resolveRequest = (context, moduleName, platform) => {
